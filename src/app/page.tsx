@@ -379,15 +379,16 @@ export default function Home() {
     // 如果是 PDF 文件，使用客户端解析
     if (file.type === 'application/pdf') {
       try {
-        toast.info('正在解析 PDF...')
+        toast.info('正在解析 PDF...', { duration: 3000 })
         const arrayBuffer = await file.arrayBuffer()
 
         // 动态导入 pdfjs-dist
         const pdfjs = await import('pdfjs-dist')
 
-        // 设置 worker - 使用 CDN
-        if (typeof window !== 'undefined') {
-          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+        // 设置 worker - 使用多个备用 CDN
+        if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
+          // 尝试使用 unpkg CDN
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
         }
 
         const loadingTask = pdfjs.getDocument({ data: arrayBuffer })
