@@ -1,8 +1,16 @@
-# 🚀 交互式提示词迭代器 (Interactive Prompt Iterator)
+<div align="center">
+  <img src="icon.png" alt="Prompt Iterator Logo" width="120" height="120" />
 
-一个基于 **Next.js 14**、**Shadcn UI** 和 **Vercel AI SDK** 构建的现代化提示词优化 Web 应用。通过多轮交互式对话，帮助用户将模糊的想法转化为结构化、高质量的 AI 提示词。
+  # 🚀 交互式提示词迭代器
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+  ### Interactive Prompt Iterator
+
+  一个基于 **Next.js 14**、**Shadcn UI** 和 **Vercel AI SDK** 构建的现代化提示词优化 Web 应用。
+
+  通过多轮交互式对话，帮助用户将模糊的想法转化为结构化、高质量的 AI 提示词。
+
+  [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+</div>
 
 ## 📺 功能演示
 
