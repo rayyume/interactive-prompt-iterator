@@ -17,17 +17,17 @@
 ### 1. 交互式提示词生成流程
 > 用这个 GIF 体现：从用户输入模糊需求 → AI 提供多维度选项 → 用户选择偏好 → 生成结构化提示词的完整流程
 
-![交互式生成流程](docs/screenshots/demo-interactive-flow.gif)
+![交互式生成流程](docs/screenshots/demo-interactive-flow.webp)
 
 ### 2. 文件上传与解析
 > 用这个 GIF 体现：上传 PDF/DOCX/图片文件 → 自动解析内容 → 结合文件内容生成提示词
 
-![文件上传演示](docs/screenshots/demo-file-upload.gif)
+![文件上传演示](docs/screenshots/demo-file-upload.webp)
 
 ### 3. 自定义模板管理
 > 用这个 GIF 体现：创建自定义提示词模板 → 保存模板 → 切换使用不同模板
 
-![模板管理演示](docs/screenshots/demo-template-management.gif)
+![模板管理演示](docs/screenshots/demo-template-management.webp)
 
 ## ✨ 核心特性
 

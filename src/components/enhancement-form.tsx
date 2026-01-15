@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 
 interface EnhancementOption {
     label: string
@@ -179,17 +180,21 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                         return (
                         <div key={dim.key} className="p-4 hover:bg-muted/10 transition-colors">
                             <div className="mb-3 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
                                     <Label className="text-sm font-semibold text-foreground/80">{dim.title}</Label>
-                                    <Button
-                                        variant={isMultiple ? "default" : "outline"}
-                                        size="sm"
-                                        disabled={submitted}
-                                        className="h-6 px-3 text-xs font-medium"
-                                        onClick={() => toggleMultiSelect(dim.key)}
-                                    >
-                                        {isMultiple ? '多选' : '单选'}
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs ${!isMultiple ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                            单选
+                                        </span>
+                                        <Switch
+                                            checked={isMultiple}
+                                            disabled={submitted}
+                                            onCheckedChange={() => toggleMultiSelect(dim.key)}
+                                        />
+                                        <span className={`text-xs ${isMultiple ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                            多选
+                                        </span>
+                                    </div>
                                 </div>
                                 {selections[dim.key] && (
                                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5">

@@ -763,16 +763,6 @@ export default function Home() {
                       {m.toolInvocations?.map((toolInvocation: any) => {
                         const toolCallId = toolInvocation.toolCallId;
 
-                        // 显示加载动画（当工具调用存在但参数未完成时）
-                        if (!toolInvocation.args) {
-                          return (
-                            <div key={toolCallId} className="mt-3 flex items-center gap-2 text-sm text-muted-foreground animate-pulse">
-                              <Sparkles className="w-4 h-4 animate-spin" />
-                              <span>正在生成交互式表单...</span>
-                            </div>
-                          )
-                        }
-
                         if (toolInvocation.toolName === 'ask_questions') {
                           return (
                             <div key={toolCallId} className="mt-3">
@@ -791,7 +781,7 @@ export default function Home() {
 
                         if (toolInvocation.toolName === 'suggest_enhancements') {
                           return (
-                            <div key={toolCallId} className="w-full mt-3">
+                            <div key={toolCallId} className="-mx-5 -mb-3 mt-3">
                               <EnhancementForm
                                 toolInvocation={toolInvocation}
                                 onSubmit={(text) => {
