@@ -87,6 +87,19 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
         })
     }
 
+    const toggleMultiSelect = (dimKey: string) => {
+        setForceMultiSelect(prev => ({
+            ...prev,
+            [dimKey]: !prev[dimKey]
+        }))
+        // 切换时清空该维度的选择
+        setSelections(prev => {
+            const newSel = { ...prev }
+            delete newSel[dimKey]
+            return newSel
+        })
+    }
+
     // 获取选项的显示标签（优先使用编辑后的标签）
     const getOptionLabel = (dimKey: string, optionValue: string, originalLabel: string) => {
         const key = `${dimKey}-${optionValue}`
