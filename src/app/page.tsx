@@ -825,10 +825,10 @@ export default function Home() {
                               <span>正在思考...</span>
                             </div>
                           )}
-                          {/* 工具调用加载 */}
+                          {/* 工具调用加载 - 即使有内容也显示 */}
                           {m.toolInvocations && m.toolInvocations.length > 0 && !m.toolInvocations[0].args && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse">
-                              <Sparkles className="w-4 h-4 animate-spin" />
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse bg-muted/30 rounded-lg p-3 border border-dashed">
+                              <Sparkles className="w-4 h-4 animate-spin text-primary" />
                               <span>正在生成交互式表单...</span>
                             </div>
                           )}
