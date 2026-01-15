@@ -20,6 +20,7 @@ interface EnhancementDimension {
     title: string
     options: EnhancementOption[]
     allowCustom: boolean
+    selectionType?: 'single' | 'multiple' // 单选或多选
 }
 
 interface EnhancementFormProps {
@@ -30,9 +31,10 @@ interface EnhancementFormProps {
 
 export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: EnhancementFormProps) {
     const { toolCallId, args } = toolInvocation
-    const [selections, setSelections] = useState<Record<string, string>>({})
+    const [selections, setSelections] = useState<Record<string, string | string[]>>({}) // 支持单选和多选
     const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
     const [submitted, setSubmitted] = useState(false)
+    const [forceMultiSelect, setForceMultiSelect] = useState<Record<string, boolean>>({}) // 强制多选
 
     // Parse args safely
     let formConfig: { dimensions: EnhancementDimension[] } | null = null
@@ -51,14 +53,46 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
         )
     }
 
-    const handleSelect = (dimKey: string, value: string) => {
+    const handleSelect = (dimKey: string, value: string, isMultiple: boolean) => {
         setSelections(prev => {
             const newSel = { ...prev }
-            if (newSel[dimKey] === value) {
-                delete newSel[dimKey] // Toggle off
+
+            if (isMultiple) {
+                // 多选逻辑
+                const current = Array.isArray(newSel[dimKey]) ? newSel[dimKey] as string[] : []
+                if (current.includes(value)) {
+                    // 取消选择
+                    const filtered = current.filter(v => v !== value)
+                    if (filtered.length === 0) {
+                        delete newSel[dimKey]
+                    } else {
+                        newSel[dimKey] = filtered
+                    }
+                } else {
+                    // 添加选择
+                    newSel[dimKey] = [...current, value]
+                }
             } else {
-                newSel[dimKey] = value
+                // 单选逻辑
+                if (newSel[dimKey] === value) {
+                    delete newSel[dimKey] // Toggle off
+                } else {
+                    newSel[dimKey] = value
+                }
             }
+            return newSel
+        })
+    }
+
+    const toggleMultiSelect = (dimKey: string) => {
+        setForceMultiSelect(prev => ({
+            ...prev,
+            [dimKey]: !prev[dimKey]
+        }))
+        // 切换时清空该维度的选择
+        setSelections(prev => {
+            const newSel = { ...prev }
+            delete newSel[dimKey]
             return newSel
         })
     }
@@ -76,8 +110,18 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
             if (customVal && customVal.trim()) {
                 feedbackParts.push(`【${dim.title}】: 用户自定义 - ${customVal}`)
             } else if (selectedVal) {
-                const opt = dim.options.find(o => o.value === selectedVal)
-                feedbackParts.push(`【${dim.title}】: ${opt?.label || selectedVal}`)
+                if (Array.isArray(selectedVal)) {
+                    // 多选
+                    const labels = selectedVal.map(v => {
+                        const opt = dim.options.find(o => o.value === v)
+                        return opt?.label || v
+                    })
+                    feedbackParts.push(`【${dim.title}】: ${labels.join('、')}`)
+                } else {
+                    // 单选
+                    const opt = dim.options.find(o => o.value === selectedVal)
+                    feedbackParts.push(`【${dim.title}】: ${opt?.label || selectedVal}`)
+                }
             }
             // If neither, implied "Skip/No Change"
         })
@@ -98,12 +142,13 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
         }
     }
 
+    // 如果已提交或有结果，显示已完成状态（不可再交互）
     if (submitted || 'result' in toolInvocation) {
         return (
             <Card className="bg-muted/10 border-dashed">
                 <CardContent className="p-4 flex items-center gap-2 text-muted-foreground">
-                    <Check className="w-4 h-4" />
-                    <span className="text-sm">已提交优化方向，正在生成最终文档...</span>
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span className="text-sm">✓ 已提交优化方向</span>
                 </CardContent>
             </Card>
         )
@@ -121,30 +166,55 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
 
             <CardContent className="p-0">
                 <div className="flex flex-col">
-                    {formConfig.dimensions.map((dim, idx) => (
+                    {formConfig.dimensions.map((dim, idx) => {
+                        const isMultiple = forceMultiSelect[dim.key] || dim.selectionType === 'multiple'
+                        const currentSelection = selections[dim.key]
+                        const isSelected = (value: string) => {
+                            if (Array.isArray(currentSelection)) {
+                                return currentSelection.includes(value)
+                            }
+                            return currentSelection === value
+                        }
+
+                        return (
                         <div key={dim.key} className="p-4 hover:bg-muted/10 transition-colors">
                             <div className="mb-3 flex items-center justify-between">
-                                <Label className="text-sm font-semibold text-foreground/80">{dim.title}</Label>
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-sm font-semibold text-foreground/80">{dim.title}</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={submitted}
+                                        className="h-5 px-2 text-[10px] text-muted-foreground hover:text-primary"
+                                        onClick={() => toggleMultiSelect(dim.key)}
+                                    >
+                                        {isMultiple ? '多选' : '单选'}
+                                    </Button>
+                                </div>
                                 {selections[dim.key] && (
                                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                                        已选
+                                        {Array.isArray(currentSelection) ? `已选 ${currentSelection.length}` : '已选'}
                                     </Badge>
                                 )}
                             </div>
 
                             <div className="flex flex-wrap gap-2 mb-3">
-                                {dim.options.map((opt) => (
+                                {dim.options.map((opt) => {
+                                    const selected = isSelected(opt.value)
+                                    return (
                                     <Button
                                         key={opt.value}
-                                        variant={selections[dim.key] === opt.value ? "default" : "outline"}
+                                        variant={selected ? "default" : "outline"}
                                         size="sm"
-                                        className={`h-8 text-xs ${selections[dim.key] === opt.value ? 'shadow-md scale-105' : 'text-muted-foreground border-muted-foreground/30'}`}
-                                        onClick={() => handleSelect(dim.key, opt.value)}
+                                        disabled={submitted}
+                                        className={`h-8 text-xs ${selected ? 'shadow-md scale-105' : 'text-muted-foreground border-muted-foreground/30'}`}
+                                        onClick={() => handleSelect(dim.key, opt.value, isMultiple)}
                                         title={opt.description}
                                     >
                                         {opt.label}
                                     </Button>
-                                ))}
+                                    )
+                                })}
                             </div>
 
                             {dim.allowCustom && (
@@ -152,13 +222,15 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                                     placeholder="其他 (输入自定义要求)..."
                                     className="h-8 text-xs bg-transparent border-input/50 focus-visible:ring-primary/20"
                                     value={customInputs[dim.key] || ''}
+                                    disabled={submitted}
                                     onChange={(e) => setCustomInputs(prev => ({ ...prev, [dim.key]: e.target.value }))}
                                 />
                             )}
 
                             {idx < (formConfig?.dimensions.length || 0) - 1 && <Separator className="mt-4 opacity-50" />}
                         </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </CardContent>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, MessageSquare, Trash2, Menu } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -19,11 +19,69 @@ interface ChatSidebarProps {
 export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: ChatSidebarProps) {
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [isOpen, setIsOpen] = useState(false)
+    const [isCollapsed, setIsCollapsed] = useState(false)
+    const [sidebarWidth, setSidebarWidth] = useState(256) // 默认 256px (w-64)
+    const [isResizing, setIsResizing] = useState(false)
 
     const loadSessions = async () => {
         const allSessions = await db.chatSessions.orderBy('updatedAt').reverse().toArray()
         setSessions(allSessions)
     }
+
+    // 从 localStorage 加载折叠状态和宽度
+    useEffect(() => {
+        const savedCollapsed = localStorage.getItem('sidebar-collapsed')
+        if (savedCollapsed !== null) {
+            setIsCollapsed(savedCollapsed === 'true')
+        }
+
+        const savedWidth = localStorage.getItem('sidebar-width')
+        if (savedWidth !== null) {
+            setSidebarWidth(parseInt(savedWidth))
+        }
+    }, [])
+
+    // 保存折叠状态到 localStorage
+    const toggleCollapse = () => {
+        const newState = !isCollapsed
+        setIsCollapsed(newState)
+        localStorage.setItem('sidebar-collapsed', String(newState))
+    }
+
+    // 处理拖动调整宽度
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault()
+        setIsResizing(true)
+    }
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return
+
+            const newWidth = e.clientX
+            // 限制宽度在 200px 到 500px 之间
+            if (newWidth >= 200 && newWidth <= 500) {
+                setSidebarWidth(newWidth)
+            }
+        }
+
+        const handleMouseUp = () => {
+            if (isResizing) {
+                setIsResizing(false)
+                localStorage.setItem('sidebar-width', String(sidebarWidth))
+            }
+        }
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove)
+            document.addEventListener('mouseup', handleMouseUp)
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [isResizing, sidebarWidth])
 
     useEffect(() => {
         loadSessions()
@@ -61,28 +119,41 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
         }
     }
 
-    const SidebarContent = () => (
+    const SidebarContent = ({ showToggle = false }: { showToggle?: boolean }) => (
         <div className="flex flex-col h-full py-4">
-            <div className="px-4 mb-4">
-                <Button
-                    className="w-full justify-start gap-2"
-                    variant="outline"
-                    onClick={() => {
-                        onNewChat()
-                        setIsOpen(false)
-                    }}
-                >
-                    <Plus className="w-4 h-4" />
-                    新对话
-                </Button>
+            <div className={`px-4 mb-4 flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
+                {!isCollapsed && (
+                    <Button
+                        className="flex-1 justify-start gap-2"
+                        variant="outline"
+                        onClick={() => {
+                            onNewChat()
+                            setIsOpen(false)
+                        }}
+                    >
+                        <Plus className="w-4 h-4" />
+                        新对话
+                    </Button>
+                )}
+                {showToggle && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleCollapse}
+                        className="shrink-0"
+                        title={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
+                    >
+                        {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                    </Button>
+                )}
             </div>
 
-            <ScrollArea className="flex-1 px-4">
-                <div className="flex flex-col gap-2">
+            <ScrollArea className="flex-1 px-4 overflow-auto">
+                <div className="flex flex-col gap-2 pb-4">
                     {sessions.map((session) => (
                         <div
                             key={session.id}
-                            className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors border ${currentSessionId === session.id
+                            className={`group relative flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-3 rounded-lg cursor-pointer transition-all border ${currentSessionId === session.id
                                 ? 'bg-secondary border-primary/20'
                                 : 'hover:bg-muted/50 border-transparent'
                                 }`}
@@ -91,22 +162,39 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                 setIsOpen(false)
                             }}
                         >
-                            <div className="flex flex-col gap-1 overflow-hidden">
-                                <span className="font-medium text-sm truncate">
-                                    {session.title || '未命名对话'}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    {formatDistanceToNow(session.updatedAt, { addSuffix: true, locale: zhCN })}
-                                </span>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="opacity-0 group-hover:opacity-100 h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-opacity"
-                                onClick={(e) => handleDelete(e, session.id!)}
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {isCollapsed ? (
+                                <>
+                                    <MessageSquare className="w-5 h-5" />
+                                    {/* 折叠状态下的删除按钮 - 悬浮显示 */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 h-6 w-6 bg-destructive/90 hover:bg-destructive text-destructive-foreground transition-all shrink-0 rounded-full"
+                                        onClick={(e) => handleDelete(e, session.id!)}
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col gap-1 overflow-hidden">
+                                        <span className="font-medium text-sm truncate">
+                                            {session.title || '未命名对话'}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {formatDistanceToNow(session.updatedAt, { addSuffix: true, locale: zhCN })}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="opacity-70 group-hover:opacity-100 h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                                        onClick={(e) => handleDelete(e, session.id!)}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     ))}
 
@@ -123,8 +211,24 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
     return (
         <>
             {/* Desktop Sidebar */}
-            <div className="hidden md:flex w-64 border-r flex-col bg-card/30 shrink-0">
-                <SidebarContent />
+            <div
+                className="hidden md:flex border-r flex-col bg-card/30 shrink-0 relative h-screen overflow-hidden"
+                style={{
+                    width: isCollapsed ? '64px' : `${sidebarWidth}px`,
+                    transition: isCollapsed ? 'width 0.3s' : 'none'
+                }}
+            >
+                <SidebarContent showToggle={true} />
+
+                {/* 可拖动的分隔条 */}
+                {!isCollapsed && (
+                    <div
+                        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors ${
+                            isResizing ? 'bg-primary' : ''
+                        }`}
+                        onMouseDown={handleMouseDown}
+                    />
+                )}
             </div>
 
             {/* Mobile Sidebar */}
@@ -135,7 +239,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-72">
-                    <SidebarContent />
+                    <SidebarContent showToggle={false} />
                 </SheetContent>
             </Sheet>
         </>

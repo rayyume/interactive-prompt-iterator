@@ -19,34 +19,16 @@ import { useAppStore } from '@/lib/store'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
+const TEST_CONFIG = {
+    apiKey: 'sk-xMUZVRACBogvAsbFxm2buTDoixjx7APxES7cBh5TELHABCe0',
+    baseUrl: 'https://ai.huan666.de/v1',
+    model: 'claude-sonnet-4-5-20250929',
+    systemPrompt: '你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。你应该主动提出建议，使用Checkbox等形式让用户选择。'
+}
+
 const PROMPT_PRESETS = {
-    'default': `你是交互式提示词优化助手。你的目标是帮助用户把一个模糊的想法变成一个结构化、高质量的 Prompt。
-
-**核心工作流**：
-1. **Phase 1: 建议与澄清**
-   - 当用户提出初步需求时，**不要直接生成 Prompt**。
-   - 必须调用 \`suggest_enhancements\` 工具，提供 3-5 个关键维度的优化建议。
-   - 维度示例：
-     - **角色设定**: (e.g., 资深专家, 创意总监, 严谨学者)
-     - **语气风格**: (e.g., 专业正式, 幽默风趣, 简洁明了)
-     - **思考深度**: (e.g., 一步到位, 思维链CoT, 多角度辩证)
-     - **输出格式**: (e.g., Markdown文档, JSON, 表格)
-   - 每个维度提供 2-3 个具体的选项供用户点击选择，并允许自定义。
-
-2. **Phase 2: 文档生成**
-   - 当收到 \`suggest_enhancements\` 的工具反馈（用户的选择）后，生成最终的 Markdown 文档。
-   - **文档格式要求**：
-     - 必须包含 **# 最终提示词方案** (H1)
-     - 必须包含 **目录 (TOC)**
-     - **## 基础增强**: 分析你做了哪些基础优化。
-     - **## 深度优化**: 根据用户选择的维度进行的特定优化。
-     - **## 完整 Prompt 代码块**: 使用代码块包裹最终的 Prompt。
-
-**原则**：
-- 始终保持引导性。
-- 最终输出必须是精美的 Markdown 格式。`,
-    'simple': `你是提示词助手。直接根据用户需求生成简洁的 Prompt，不需要复杂的交互流程。`,
-    'custom': ''
+    default: '你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。你应该主动提出建议，使用Checkbox等形式让用户选择。',
+    simple: '你是一个提示词助手，帮助用户优化和改进他们的提示词。'
 }
 
 export function SettingsDialog() {
@@ -58,8 +40,9 @@ export function SettingsDialog() {
     const [isChecking, setIsChecking] = useState(false)
     const [checkStatus, setCheckStatus] = useState<'idle' | 'success' | 'error'>('idle')
     const [checkMessage, setCheckMessage] = useState('')
-    // const [availableModels, setAvailableModels] = useState<string[]>([]) // Moved to store
-    const [promptPreset, setPromptPreset] = useState('default')
+
+    // Prompt Preset State
+    const [promptPreset, setPromptPreset] = useState<string>('custom')
     const [presetMsg, setPresetMsg] = useState('')
 
     // Initial sync
@@ -67,18 +50,8 @@ export function SettingsDialog() {
         if (open) {
             setLocalConfig({ apiKey, baseUrl, model, systemPrompt })
             setCheckStatus('idle')
-            setPresetMsg('')
         }
     }, [open, apiKey, baseUrl, model, systemPrompt])
-
-    // Detect preset match
-    useEffect(() => {
-        if (open) {
-            if (localConfig.systemPrompt.includes('Phase 1: 建议与澄清')) setPromptPreset('default')
-            else if (localConfig.systemPrompt.includes('直接根据用户需求生成简洁的 Prompt')) setPromptPreset('simple')
-            else setPromptPreset('custom')
-        }
-    }, [open, localConfig.systemPrompt])
 
     const normalizeUrl = (url: string) => {
         let cleanUrl = url.trim()
@@ -167,6 +140,12 @@ export function SettingsDialog() {
         }
     }
 
+    const loadTestConfig = () => {
+        setLocalConfig(TEST_CONFIG)
+        setCheckStatus('idle')
+        setCheckMessage('')
+    }
+
     const handleSave = () => {
         setApiKey(localConfig.apiKey)
         setBaseUrl(localConfig.baseUrl)
@@ -200,17 +179,10 @@ export function SettingsDialog() {
                     <div className="flex-1 overflow-y-auto p-6 pt-4">
                         <TabsContent value="config" className="space-y-6 mt-0">
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => applyPreset('deepseek')} className="flex-1">
-                                    DeepSeek 预设
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => applyPreset('openai')} className="flex-1">
-                                    OpenAI 预设
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => applyPreset('openai')} className="flex-1">
-                                    OpenAI 预设
+                                <Button variant="outline" size="sm" onClick={loadTestConfig} className="flex-1">
+                                    🧪 测试预设（一键配置）
                                 </Button>
                             </div>
-                            {presetMsg && <div className="text-xs text-green-600 font-medium text-center mb-2 animate-in fade-in slide-in-from-top-1">{presetMsg}</div>}
 
                             <div className="space-y-4">
                                 <div className="space-y-2">

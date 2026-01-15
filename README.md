@@ -1,49 +1,265 @@
-# 交互式提示词迭代器 (Interactive Prompt Iterator)
+# 🚀 交互式提示词迭代器 (Interactive Prompt Iterator)
 
-这是一个基于 **Next.js 14+**、**Shadcn UI** 和 **Vercel AI SDK** 构建的现代化提示词优化 Web 应用。旨在通过交互式对话，帮助用户将模糊的想法转化为结构化、高质量的 AI 提示词。
+一个基于 **Next.js 14**、**Shadcn UI** 和 **Vercel AI SDK** 构建的现代化提示词优化 Web 应用。通过多轮交互式对话，帮助用户将模糊的想法转化为结构化、高质量的 AI 提示词。
 
-## 核心特性
-- **纯前端架构**：无需独立后端数据库，所有数据（LLM API Key、对话历史）均存储在用户浏览器本地。
-- **本地优先 (Local-First)**：
-    - **配置存储**：使用 `Zustand` + `LocalStorage` 存储 API Key 和模型偏好。
-    - **历史记录**：使用 `Dexie.js` (IndexedDB) 存储海量对话记录（包含结构化数据）。
-- **交互式引导**：
-    - 首页提供 "灵感卡片" (Inspiration Cards) 快速启动任务。
-    - 支持 "Demo 模式"（输入 API Key 为 `demo` 即可体验模拟对话）。
-- **极简 UI**：采用 TailwindCSS + Shadcn/UI 设计系统，支持深色模式。
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
 
-## 技术栈
-- **Framework**: Next.js 16 (App Router)
-- **UI**: Tailwind CSS v4, Shadcn/UI, Lucide React
-- **State Management**: Zustand
-- **Database**: Dexie.js (IndexedDB wrapper)
-- **AI Integration**: Vercel AI SDK (@ai-sdk/react, @ai-sdk/openai)
+## ✨ 核心特性
 
-## 快速开始
+- **🎯 智能交互引导**：通过交互式表单和多轮对话，逐步明确用户需求
+- **💾 本地优先 (Local-First)**：
+  - 配置存储：使用 `Zustand` + `LocalStorage` 存储 API Key 和模型偏好
+  - 历史记录：使用 `Dexie.js` (IndexedDB) 存储对话记录，支持离线访问
+- **🎨 现代化 UI**：
+  - 采用 Tailwind CSS + Shadcn/UI 设计系统
+  - 支持深色模式
+  - 响应式设计，支持移动端
+- **📁 文件支持**：
+  - 支持图片上传和粘贴（PNG、JPG、WebP）
+  - 支持 PDF 文档解析
+  - 支持多模态模型（GPT-4o、Claude 3.5、Gemini 等）
+- **🔧 灵活配置**：
+  - 支持多种 AI 模型（OpenAI、Claude、国产大模型）
+  - 自定义 API Base URL
+  - 可调整系统提示词
 
-### 1. 安装依赖
+## 🛠️ 技术栈
+
+- **Framework**: Next.js 14.2.16 (App Router)
+- **UI**: Tailwind CSS 3.4, Shadcn/UI, Lucide React
+- **State Management**: Zustand 5.0
+- **Database**: Dexie.js 4.2 (IndexedDB wrapper)
+- **AI Integration**: Vercel AI SDK 6.0 (@ai-sdk/react, @ai-sdk/openai)
+- **File Processing**: pdfjs-dist 5.4 (PDF parsing)
+
+## 🚀 快速开始
+
+### 本地开发
+
+1. **克隆仓库**
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+```
+
+2. **安装依赖**
 ```bash
 npm install
 ```
-*注意：在 Windows 环境下，如遇到 `@tailwindcss/oxide` 或 `lightningcss` 相关的 native binding 错误，请尝试安装相关平台包：*
-```bash
-npm install --save-optional @tailwindcss/oxide-win32-x64-msvc
-```
 
-### 2. 启动开发服务器
+3. **启动开发服务器**
 ```bash
 npm run dev
 ```
-访问 http://localhost:3000
 
-### 3. 使用说明
-1. 点击右上角 **设置 (Gear Icon)**。
-2. 输入您的 OpenAI API Key（或兼容的 Base URL）。
-    - **演示模式**：在 API Key 中输入 `demo`，点击保存，即可体验模拟回复。
-3. 点击首页的 "灵感卡片" 或直接在下方输入框描述您的需求。
+4. **访问应用**
+打开浏览器访问 [http://localhost:3000](http://localhost:3000)
 
-## 目录结构
-- `src/app`: Next.js App Router 页面与 API 路由。
-- `src/components`: UI 组件 (Shadcn) 与业务组件。
-- `src/lib`: 工具库 (Store, DB, Utils)。
-- `.ai_memory`: 项目上下文记忆（用于 AI 辅助开发）。
+### 配置说明
+
+1. 点击右上角 **设置图标 (⚙️)**
+2. 输入您的 AI API 配置：
+   - **API Key**: 您的 OpenAI/Claude/其他兼容 API 的密钥
+   - **Base URL**: API 端点地址（默认：`https://api.openai.com/v1`）
+   - **Model**: 选择要使用的模型
+   - **System Prompt**: 自定义系统提示词（可选）
+
+3. 点击保存，开始使用
+
+> 💡 **提示**: 所有配置仅存储在浏览器本地，不会上传到服务器
+
+### 支持的模型
+
+- **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo, o1, o1-mini
+- **Anthropic Claude**: claude-3-5-sonnet, claude-3-5-haiku, claude-3-opus
+- **国产大模型**: deepseek-chat, deepseek-reasoner, GLM-4-Plus, Qwen-Max, moonshot-v1-128k 等
+
+## 📁 项目结构
+
+```
+├── src/
+│   ├── app/                 # Next.js App Router
+│   │   ├── api/chat/       # AI 聊天 API 路由
+│   │   └── page.tsx        # 主页面
+│   ├── components/          # React 组件
+│   │   ├── ui/             # Shadcn UI 基础组件
+│   │   ├── chat-sidebar.tsx
+│   │   ├── settings-dialog.tsx
+│   │   └── ...
+│   └── lib/                # 工具库
+│       ├── store.ts        # Zustand 状态管理
+│       ├── db.ts           # Dexie.js 数据库
+│       └── utils.ts
+├── public/                 # 静态资源
+└── package.json
+```
+
+## 🚢 部署到 Vercel
+
+### 方式一：一键部署
+
+点击下方按钮，一键部署到 Vercel：
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+
+### 方式二：手动部署
+
+1. **推送代码到 GitHub**
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+git push -u origin main
+```
+
+2. **连接 Vercel**
+   - 访问 [Vercel Dashboard](https://vercel.com/dashboard)
+   - 点击 "New Project"
+   - 导入你的 GitHub 仓库
+   - Vercel 会自动检测 Next.js 项目并配置构建设置
+
+3. **部署**
+   - 点击 "Deploy"
+   - 等待构建完成
+   - 访问生成的 URL
+
+### 环境变量配置（可选）
+
+如果需要在服务端配置默认值，可以创建 `.env.local` 文件：
+
+```env
+# 可选：设置默认 API 配置（用户仍可在前端覆盖）
+NEXT_PUBLIC_DEFAULT_API_KEY=your_api_key_here
+NEXT_PUBLIC_DEFAULT_BASE_URL=https://api.openai.com/v1
+NEXT_PUBLIC_DEFAULT_MODEL=gpt-4o
+```
+
+> ⚠️ **注意**: 不要将包含真实 API Key 的 `.env.local` 文件提交到 Git
+
+## 🎯 功能特性
+
+### 交互式提示词优化
+- 通过多轮对话逐步明确需求
+- 智能提问引导用户思考
+- 生成结构化的最终提示词
+
+### 文件处理
+- **图片识别**: 支持上传或粘贴图片，配合 Vision 模型分析
+- **PDF 解析**: 自动提取 PDF 文本内容
+- **多模态支持**: 图文混合输入
+
+### 对话管理
+- 自动保存对话历史
+- 支持多会话切换
+- 可折叠侧边栏
+- 独立滚动区域
+
+### 用户体验
+- 实时流式响应
+- 加载动画提示
+- 消息编辑和删除
+- 一键复制内容
+- 响应式设计
+
+
+## 🔧 开发指南
+
+### 构建生产版本
+
+```bash
+npm run build
+npm run start
+```
+
+### 代码检查
+
+```bash
+npm run lint
+```
+
+### 技术要点
+
+- **流式响应**: 使用 Vercel AI SDK 的 `streamText` 实现实时响应
+- **工具调用**: 支持 AI 主动调用工具生成交互式表单
+- **状态持久化**: Zustand + localStorage 实现配置持久化
+- **数据库**: Dexie.js 封装 IndexedDB，支持复杂查询
+
+
+## ❓ 常见问题
+
+### Q: 我的 API Key 安全吗？
+A: 是的。所有配置（包括 API Key）仅存储在您的浏览器本地 localStorage 中，不会上传到任何服务器。
+
+### Q: 支持哪些 AI 模型？
+A: 支持所有兼容 OpenAI API 格式的模型，包括：
+- OpenAI 官方模型（GPT-4o、GPT-4-turbo 等）
+- Anthropic Claude（通过兼容接口）
+- 国产大模型（DeepSeek、智谱 GLM、通义千问等）
+
+### Q: 如何使用自定义 API 端点？
+A: 在设置中修改 "Base URL" 为您的 API 端点地址即可。
+
+### Q: PDF 解析失败怎么办？
+A: 确保：
+1. PDF 文件不是扫描版（需要包含可提取的文本）
+2. 文件大小适中（建议 < 10MB）
+3. 浏览器支持 WebAssembly
+
+
+### Q: 图片上传不支持怎么办？
+A: 检查您选择的模型是否支持 Vision 功能。支持的模型包括：
+- GPT-4o、GPT-4-turbo
+- Claude 3.5 Sonnet、Claude 3 Opus
+- Gemini Pro Vision
+- 通义千问 VL、智谱 GLM-4V 等
+
+### Q: 对话历史存储在哪里？
+A: 对话历史存储在浏览器的 IndexedDB 中，清除浏览器数据会导致历史记录丢失。
+
+
+## 🤝 贡献指南
+
+欢迎贡献代码、报告问题或提出建议！
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+
+## 📝 更新日志
+
+### v0.1.0 (2026-01-15)
+- ✨ 初始版本发布
+- 🎯 支持多轮交互式提示词优化
+- 📁 支持图片和 PDF 文件上传
+- 💾 本地存储对话历史
+- 🎨 现代化 UI 设计
+- 🔧 支持多种 AI 模型
+
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+
+## 🙏 致谢
+
+- [Next.js](https://nextjs.org/) - React 框架
+- [Vercel AI SDK](https://sdk.vercel.ai/) - AI 集成工具
+- [Shadcn/UI](https://ui.shadcn.com/) - UI 组件库
+- [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
+- [Dexie.js](https://dexie.org/) - IndexedDB 封装库
+
+## 📧 联系方式
+
+如有问题或建议，欢迎通过以下方式联系：
+
+- 提交 [Issue](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/issues)
+- 发起 [Discussion](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/discussions)
+
+---
+
+⭐ 如果这个项目对你有帮助，欢迎给个 Star！

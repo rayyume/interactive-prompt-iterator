@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, RefreshCw, Sparkles, Send } from 'lucide-react'
+import { Copy, Check, RefreshCw, Sparkles, Send, Maximize2, X } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -14,11 +14,12 @@ interface PromptProposal {
     title: string
     role: string
     objective: string
-    context: string
-    constraints: string
-    workflow: string
-    variables: string[]
-    final_prompt: string
+    context?: string
+    constraints?: string | string[]
+    workflow?: string | string[]
+    outputFormat?: string
+    finalPrompt?: string
+    final_prompt?: string  // 兼容旧格式
 }
 
 interface PromptProposalCardProps {
@@ -30,6 +31,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
     const { toolCallId, args } = toolInvocation
     const [copied, setCopied] = useState(false)
     const [accepted, setAccepted] = useState(false)
+    const [isFullscreen, setIsFullscreen] = useState(false)
 
     // Parse args safely
     let proposal: PromptProposal | null = null
@@ -49,7 +51,8 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
     }
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(proposal?.final_prompt || '')
+        const finalPrompt = proposal?.finalPrompt || proposal?.final_prompt || ''
+        navigator.clipboard.writeText(finalPrompt)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
     }
@@ -79,7 +82,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                 </CardHeader>
                 <CardContent className="py-2">
                     <div className="text-sm text-muted-foreground line-clamp-2">
-                        {proposal.final_prompt}
+                        {proposal.finalPrompt || proposal.final_prompt}
                     </div>
                 </CardContent>
                 <CardFooter className="py-2 justify-end">
@@ -93,6 +96,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
     }
 
     return (
+        <>
         <Card className="w-full border-primary/50 shadow-md overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
             <CardHeader className="bg-muted/30 pb-3">
                 <div className="flex items-center justify-between">
@@ -104,7 +108,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                 </div>
             </CardHeader>
 
-            <Tabs defaultValue="preview" className="w-full">
+            <Tabs defaultValue="structure" className="w-full">
                 <div className="px-6 border-b bg-muted/10">
                     <TabsList className="h-10 bg-transparent p-0">
                         <TabsTrigger value="preview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
@@ -123,17 +127,27 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                             <div className="relative">
                                 <Textarea
                                     className="min-h-[200px] font-mono text-sm leading-relaxed bg-muted/20 resize-none focus-visible:ring-1"
-                                    value={proposal.final_prompt}
+                                    value={proposal.finalPrompt || proposal.final_prompt || ''}
                                     readOnly
                                 />
-                                <Button
-                                    size="icon"
-                                    variant="secondary"
-                                    className="absolute top-2 right-2 h-8 w-8 opacity-80 hover:opacity-100"
-                                    onClick={handleCopy}
-                                >
-                                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                </Button>
+                                <div className="absolute top-2 right-2 flex gap-2">
+                                    <Button
+                                        size="icon"
+                                        variant="secondary"
+                                        className="h-8 w-8 opacity-80 hover:opacity-100"
+                                        onClick={() => setIsFullscreen(true)}
+                                    >
+                                        <Maximize2 className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="secondary"
+                                        className="h-8 w-8 opacity-80 hover:opacity-100"
+                                        onClick={handleCopy}
+                                    >
+                                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </TabsContent>
@@ -180,5 +194,40 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                 </div>
             </CardFooter>
         </Card>
+
+        {/* 全屏模态框 */}
+        {isFullscreen && (
+            <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="w-full max-w-4xl h-[90vh] flex flex-col bg-card border rounded-lg shadow-2xl">
+                    <div className="flex items-center justify-between p-4 border-b">
+                        <h3 className="text-lg font-semibold">提示词预览</h3>
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setIsFullscreen(false)}
+                        >
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </div>
+                    <div className="flex-1 overflow-auto p-6">
+                        <Textarea
+                            className="w-full h-full font-mono text-sm leading-relaxed bg-muted/20 resize-none focus-visible:ring-1"
+                            value={proposal.finalPrompt || proposal.final_prompt || ''}
+                            readOnly
+                        />
+                    </div>
+                    <div className="p-4 border-t flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsFullscreen(false)}>
+                            关闭
+                        </Button>
+                        <Button onClick={handleCopy}>
+                            {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                            复制全文
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     )
 }
