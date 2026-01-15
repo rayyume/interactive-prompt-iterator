@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { type Message } from '@ai-sdk/react'
 import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { ChatSidebar } from '@/components/chat-sidebar'
@@ -744,6 +743,14 @@ export default function Home() {
                       {m.content && !m.content.includes('toolCallId') && !m.content.includes('toolName') && (
                         <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
                           {m.content}
+
+                          {/* 文字生成期间的等待提示 - 当有内容但表单未生成时显示 */}
+                          {m.role === 'assistant' && m.id === messages[messages.length - 1]?.id && isLoading && !m.toolInvocations && (
+                            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 animate-pulse">
+                              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-spin" />
+                              <span className="font-medium text-amber-700 dark:text-amber-300">正在准备交互式表单，请稍候...</span>
+                            </div>
+                          )}
                         </div>
                       )}
 

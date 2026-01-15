@@ -36,6 +36,8 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
     const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
     const [submitted, setSubmitted] = useState(false)
     const [forceMultiSelect, setForceMultiSelect] = useState<Record<string, boolean>>({}) // 强制多选
+    const [editingOption, setEditingOption] = useState<{ dimKey: string; optionValue: string } | null>(null) // 正在编辑的选项
+    const [editedLabels, setEditedLabels] = useState<Record<string, string>>({}) // 编辑后的标签
 
     // Parse args safely
     let formConfig: { dimensions: EnhancementDimension[] } | null = null
@@ -85,17 +87,25 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
         })
     }
 
-    const toggleMultiSelect = (dimKey: string) => {
-        setForceMultiSelect(prev => ({
-            ...prev,
-            [dimKey]: !prev[dimKey]
-        }))
-        // 切换时清空该维度的选择
-        setSelections(prev => {
-            const newSel = { ...prev }
-            delete newSel[dimKey]
-            return newSel
-        })
+    // 获取选项的显示标签（优先使用编辑后的标签）
+    const getOptionLabel = (dimKey: string, optionValue: string, originalLabel: string) => {
+        const key = `${dimKey}-${optionValue}`
+        return editedLabels[key] || originalLabel
+    }
+
+    // 处理双击编辑
+    const handleDoubleClick = (dimKey: string, optionValue: string, currentLabel: string) => {
+        if (submitted) return
+        setEditingOption({ dimKey, optionValue })
+        const key = `${dimKey}-${optionValue}`
+        if (!editedLabels[key]) {
+            setEditedLabels(prev => ({ ...prev, [key]: currentLabel }))
+        }
+    }
+
+    // 保存编辑
+    const handleSaveEdit = () => {
+        setEditingOption(null)
     }
 
     const handleSubmit = () => {
@@ -206,18 +216,50 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                             <div className="flex flex-wrap gap-2 mb-3">
                                 {dim.options.map((opt) => {
                                     const selected = isSelected(opt.value)
+                                    const isEditing = editingOption?.dimKey === dim.key && editingOption?.optionValue === opt.value
+                                    const displayLabel = getOptionLabel(dim.key, opt.value, opt.label)
+                                    const editKey = `${dim.key}-${opt.value}`
+
+                                    if (isEditing) {
+                                        // 编辑模式：显示输入框
+                                        return (
+                                            <div key={opt.value} className="flex items-center gap-1">
+                                                <Input
+                                                    autoFocus
+                                                    className="h-8 text-xs w-32"
+                                                    value={editedLabels[editKey] || opt.label}
+                                                    onChange={(e) => setEditedLabels(prev => ({ ...prev, [editKey]: e.target.value }))}
+                                                    onBlur={handleSaveEdit}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleSaveEdit()
+                                                        if (e.key === 'Escape') {
+                                                            setEditedLabels(prev => {
+                                                                const newLabels = { ...prev }
+                                                                delete newLabels[editKey]
+                                                                return newLabels
+                                                            })
+                                                            setEditingOption(null)
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        )
+                                    }
+
+                                    // 正常模式：显示按钮
                                     return (
-                                    <Button
-                                        key={opt.value}
-                                        variant={selected ? "default" : "outline"}
-                                        size="sm"
-                                        disabled={submitted}
-                                        className={`h-8 text-xs ${selected ? 'shadow-md scale-105' : 'text-muted-foreground border-muted-foreground/30'}`}
-                                        onClick={() => handleSelect(dim.key, opt.value, isMultiple)}
-                                        title={opt.description}
-                                    >
-                                        {opt.label}
-                                    </Button>
+                                        <Button
+                                            key={opt.value}
+                                            variant={selected ? "default" : "outline"}
+                                            size="sm"
+                                            disabled={submitted}
+                                            className={`h-8 text-xs ${selected ? 'shadow-md scale-105' : 'text-muted-foreground border-muted-foreground/30'}`}
+                                            onClick={() => handleSelect(dim.key, opt.value, isMultiple)}
+                                            onDoubleClick={() => handleDoubleClick(dim.key, opt.value, displayLabel)}
+                                            title={`${opt.description || ''}\n\n💡 双击可编辑选项文本`}
+                                        >
+                                            {displayLabel}
+                                        </Button>
                                     )
                                 })}
                             </div>

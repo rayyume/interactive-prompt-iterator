@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, MessageSquare, Trash2, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, Menu, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Input } from '@/components/ui/input'
 import { db, type ChatSession } from '@/lib/db'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
@@ -22,11 +23,29 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
     const [isCollapsed, setIsCollapsed] = useState(false)
     const [sidebarWidth, setSidebarWidth] = useState(256) // 默认 256px (w-64)
     const [isResizing, setIsResizing] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('') // 搜索关键词
+    const [filteredSessions, setFilteredSessions] = useState<ChatSession[]>([]) // 过滤后的会话
 
     const loadSessions = async () => {
         const allSessions = await db.chatSessions.orderBy('updatedAt').reverse().toArray()
         setSessions(allSessions)
+        setFilteredSessions(allSessions)
     }
+
+    // 搜索过滤
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setFilteredSessions(sessions)
+            return
+        }
+
+        const query = searchQuery.toLowerCase()
+        const filtered = sessions.filter(session =>
+            session.title?.toLowerCase().includes(query) ||
+            session.previewText?.toLowerCase().includes(query)
+        )
+        setFilteredSessions(filtered)
+    }, [searchQuery, sessions])
 
     // 从 localStorage 加载折叠状态和宽度
     useEffect(() => {
@@ -148,9 +167,39 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                 )}
             </div>
 
+            {/* 搜索框 */}
+            {!isCollapsed && (
+                <div className="px-4 mb-3">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="搜索对话..."
+                            className="pl-8 pr-8 h-9 text-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-9 w-9 hover:bg-transparent"
+                                onClick={() => setSearchQuery('')}
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
+                    </div>
+                    {searchQuery && (
+                        <p className="text-xs text-muted-foreground mt-1.5 px-1">
+                            找到 {filteredSessions.length} 条结果
+                        </p>
+                    )}
+                </div>
+            )}
+
             <ScrollArea className="flex-1 px-4 overflow-auto">
                 <div className="flex flex-col gap-2 pb-4">
-                    {sessions.map((session) => (
+                    {filteredSessions.map((session) => (
                         <div
                             key={session.id}
                             className={`group relative flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-3 rounded-lg cursor-pointer transition-all border ${currentSessionId === session.id
@@ -198,7 +247,15 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                         </div>
                     ))}
 
-                    {sessions.length === 0 && (
+                    {filteredSessions.length === 0 && searchQuery && (
+                        <div className="text-center text-sm text-muted-foreground py-8">
+                            <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p>未找到匹配的对话</p>
+                            <p className="text-xs mt-1">尝试其他关键词</p>
+                        </div>
+                    )}
+
+                    {sessions.length === 0 && !searchQuery && (
                         <div className="text-center text-sm text-muted-foreground py-8">
                             暂无历史记录
                         </div>
