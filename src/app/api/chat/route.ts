@@ -257,7 +257,7 @@ export async function POST(req: Request) {
                             const resultData = {
                                 toolCallId: part.toolCallId,
                                 toolName: part.toolName,
-                                result: part.result
+                                result: 'result' in part ? part.result : undefined
                             };
                             const chunk = `a:${JSON.stringify(resultData)}\n`;
                             controller.enqueue(encoder.encode(chunk));

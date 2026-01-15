@@ -811,12 +811,12 @@ export default function Home() {
                         return null
                       })}
 
-                      {/* 加载提示 */}
+                      {/* 加载提示 - 叠加遮罩动画 */}
                       {m.role === 'assistant' && m.id === messages[messages.length - 1]?.id && isLoading && (
-                        <div className="mt-3">
+                        <>
                           {/* 等待 AI 回复 */}
                           {!m.content && !m.toolInvocations && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                               <div className="flex gap-1">
                                 <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                                 <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -825,14 +825,18 @@ export default function Home() {
                               <span>正在思考...</span>
                             </div>
                           )}
-                          {/* 工具调用加载 - 即使有内容也显示 */}
+
+                          {/* 工具调用加载 - 叠加遮罩（即使有文字内容也显示） */}
                           {m.toolInvocations && m.toolInvocations.length > 0 && !m.toolInvocations[0].args && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse bg-muted/30 rounded-lg p-3 border border-dashed">
-                              <Sparkles className="w-4 h-4 animate-spin text-primary" />
-                              <span>正在生成交互式表单...</span>
+                            <div className="mt-3 relative">
+                              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse rounded-lg backdrop-blur-[2px] z-10" />
+                              <div className="relative z-20 flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3 border border-dashed border-primary/30">
+                                <Sparkles className="w-4 h-4 animate-spin text-primary" />
+                                <span className="font-medium">正在生成交互式表单...</span>
+                              </div>
                             </div>
                           )}
-                        </div>
+                        </>
                       )}
                     </div>
 
