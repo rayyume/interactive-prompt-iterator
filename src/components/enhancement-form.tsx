@@ -135,16 +135,19 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                 feedbackParts.push(`【${dim.title}】: 用户自定义 - ${customVal}`)
             } else if (selectedVal) {
                 if (Array.isArray(selectedVal)) {
-                    // 多选
+                    // 多选 - 使用编辑后的标签
                     const labels = selectedVal.map(v => {
                         const opt = dim.options.find(o => o.value === v)
-                        return opt?.label || v
+                        const editKey = `${dim.key}-${v}`
+                        return editedLabels[editKey] || opt?.label || v
                     })
                     feedbackParts.push(`【${dim.title}】: ${labels.join('、')}`)
                 } else {
-                    // 单选
+                    // 单选 - 使用编辑后的标签
                     const opt = dim.options.find(o => o.value === selectedVal)
-                    feedbackParts.push(`【${dim.title}】: ${opt?.label || selectedVal}`)
+                    const editKey = `${dim.key}-${selectedVal}`
+                    const finalLabel = editedLabels[editKey] || opt?.label || selectedVal
+                    feedbackParts.push(`【${dim.title}】: ${finalLabel}`)
                 }
             }
             // If neither, implied "Skip/No Change"
