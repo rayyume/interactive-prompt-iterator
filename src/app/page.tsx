@@ -78,7 +78,8 @@ export default function Home() {
         id: m.id?.toString() || Math.random().toString(),
         role: m.role as any,
         content: m.content,
-        toolInvocations: m.toolInvocations
+        toolInvocations: m.toolInvocations,
+        file: m.file
       }))
       setMessages(uiMessages)
     }
@@ -132,11 +133,16 @@ export default function Home() {
       } : undefined
     }
 
-    // 保存用户消息到数据库
+    // 保存用户消息到数据库（包含文件信息）
     await db.messages.add({
       sessionId: currentId,
       role: 'user',
       content: localInput,
+      file: uploadedFile ? {
+        name: uploadedFile.name,
+        type: uploadedFile.type,
+        preview: filePreview
+      } : undefined,
       createdAt: new Date()
     })
 
@@ -385,10 +391,9 @@ export default function Home() {
         // 动态导入 pdfjs-dist
         const pdfjs = await import('pdfjs-dist')
 
-        // 设置 worker - 使用多个备用 CDN
+        // 设置 worker - 使用 jsdelivr CDN（更稳定）
         if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
-          // 尝试使用 unpkg CDN
-          pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
         }
 
         const loadingTask = pdfjs.getDocument({ data: arrayBuffer })

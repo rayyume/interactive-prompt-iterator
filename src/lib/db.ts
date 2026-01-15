@@ -19,6 +19,12 @@ export interface ChatMessage {
     toolInvocations?: any[];
     data?: any;
     annotations?: any[];
+    // 文件附件信息
+    file?: {
+        name: string;
+        type: string;
+        preview?: string;
+    };
 }
 
 export class PromptIteratorDB extends Dexie {
