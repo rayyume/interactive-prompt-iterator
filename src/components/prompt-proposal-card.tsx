@@ -151,7 +151,18 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                         <Sparkles className="w-5 h-5 text-primary" />
                         <CardTitle className="text-lg">{proposal.title}</CardTitle>
                     </div>
-                    <Badge variant="outline" className="bg-background">结构化建议</Badge>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="icon"
+                            variant={favorited ? "default" : "secondary"}
+                            className={`h-8 w-8 transition-all ${favorited ? 'bg-yellow-500 hover:bg-yellow-600' : 'opacity-80 hover:opacity-100'}`}
+                            onClick={handleFavorite}
+                            title={favorited ? "取消收藏" : "收藏提示词"}
+                        >
+                            <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-white text-white' : ''}`} />
+                        </Button>
+                        <Badge variant="outline" className="bg-background">结构化建议</Badge>
+                    </div>
                 </div>
             </CardHeader>
 
@@ -180,15 +191,6 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                                 <div className="absolute top-2 right-2 flex gap-2">
                                     <Button
                                         size="icon"
-                                        variant={favorited ? "default" : "secondary"}
-                                        className={`h-8 w-8 transition-all ${favorited ? 'bg-yellow-500 hover:bg-yellow-600' : 'opacity-80 hover:opacity-100'}`}
-                                        onClick={handleFavorite}
-                                        title={favorited ? "取消收藏" : "收藏提示词"}
-                                    >
-                                        <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-white text-white' : ''}`} />
-                                    </Button>
-                                    <Button
-                                        size="icon"
                                         variant="secondary"
                                         className="h-8 w-8 opacity-80 hover:opacity-100"
                                         onClick={() => setIsFullscreen(true)}
@@ -208,20 +210,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="structure" className="m-0 p-6 space-y-4 relative">
-                        {/* 收藏按钮 - 右上角 */}
-                        <div className="absolute top-4 right-4 z-10">
-                            <Button
-                                size="icon"
-                                variant={favorited ? "default" : "secondary"}
-                                className={`h-8 w-8 transition-all ${favorited ? 'bg-yellow-500 hover:bg-yellow-600' : 'opacity-80 hover:opacity-100'}`}
-                                onClick={handleFavorite}
-                                title={favorited ? "取消收藏" : "收藏提示词"}
-                            >
-                                <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-white text-white' : ''}`} />
-                            </Button>
-                        </div>
-
+                    <TabsContent value="structure" className="m-0 p-6 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-xs font-semibold uppercase text-muted-foreground">Role (角色)</Label>
@@ -267,7 +256,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
         {/* 全屏模态框 */}
         {isFullscreen && (
             <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-                <div className="w-full max-w-6xl h-[90vh] flex flex-col bg-card border rounded-lg shadow-2xl">
+                <div className="w-full max-w-[90vw] h-[90vh] flex flex-col bg-card border rounded-lg shadow-2xl">
                     <div className="flex items-center justify-between p-4 border-b">
                         <h3 className="text-lg font-semibold">提示词预览</h3>
                         <Button

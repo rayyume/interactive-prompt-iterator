@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare } from 'lucide-react'
+import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare, Upload, X } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { db } from '@/lib/db'
@@ -352,20 +352,16 @@ export default function Home() {
   }
 
   const handleNewChat = async () => {
-    // 如果有当前会话，删除数据库中的消息
-    if (sessionId) {
-      try {
-        await db.messages.where('sessionId').equals(sessionId).delete()
-        await db.chatSessions.delete(sessionId)
-      } catch (error) {
-        console.error('Failed to delete session:', error)
-      }
-    }
-
+    // 只清空UI状态，不删除数据库记录
     setSessionId(null)
     setMessages([])
     setLocalInput('')
     setUploadedFiles([])
+
+    // 如果在收藏标签页，切换到对话标签页
+    if (activeTab === 'favorites') {
+      setActiveTab('chat')
+    }
   }
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -986,17 +982,68 @@ export default function Home() {
         {activeTab === 'chat' && (
         <div className="p-4 bg-background border-t shrink-0">
           <div className="max-w-3xl mx-auto">
+            {/* 文件展示区 - 独立在输入框上方 */}
+            {uploadedFiles.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border">
+                {uploadedFiles.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-background rounded-lg border shadow-sm">
+                    {item.preview ? (
+                      <img src={item.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
+                    ) : (
+                      <div className="w-12 h-12 bg-muted-foreground/10 rounded flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 max-w-[150px]">
+                      <p className="text-xs font-medium truncate">{item.file.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {(item.file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => handleFileRemove(index)}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <form
               onSubmit={onFormSubmit}
               className="relative flex items-end gap-2 p-2 rounded-xl border bg-muted/40 hover:border-primary/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all"
             >
-              {/* 文件上传按钮 - 移到输入框左侧 */}
+              {/* 文件上传按钮 */}
               <div className="mb-1 ml-1">
-                <FileUpload
-                  onFileSelect={handleFileSelect}
-                  onFileRemove={handleFileRemove}
-                  currentFiles={uploadedFiles}
-                  modelSupportsVision={modelSupportsVision}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  title="上传文件"
+                >
+                  <Upload className="w-4 h-4" />
+                </Button>
+                <input
+                  id="file-input"
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf,.docx"
+                  multiple
+                  onChange={async (e) => {
+                    const files = e.target.files
+                    if (!files || files.length === 0) return
+                    for (let i = 0; i < files.length; i++) {
+                      await handleFileSelect(files[i])
+                    }
+                    e.target.value = ''
+                  }}
                 />
               </div>
               <AutoResizeTextarea
