@@ -61,6 +61,7 @@
 ## 📑 目录
 
 - [功能演示](#-功能演示)
+- [用户交互流程](#-用户交互流程)
 - [核心特性](#-核心特性)
 - [技术栈](#️-技术栈)
 - [快速开始](#-本地开发)
@@ -228,6 +229,43 @@
 > 演示：创建自定义提示词模板 → 保存到本地 → 切换使用不同模板 → 快速应用到新对话
 
 ![模板管理演示](docs/screenshots/demo-template-management.gif)
+
+---
+
+## 🔄 用户交互流程
+
+### 完整使用流程
+
+```mermaid
+graph TD
+    Start([打开应用]) --> Input[输入模糊需求]
+    Input --> Upload{需要上传文件?}
+    Upload -->|是| DragDrop[拖拽文件或点击上传]
+    Upload -->|否| Submit[点击发送]
+    DragDrop --> Submit
+    Submit --> AI[AI 分析需求]
+    AI --> Questions[展示多维度选项]
+    Questions --> UserSelect[选择偏好]
+    UserSelect --> Generate[生成结构化提示词]
+    Generate --> Preview[预览和详情]
+    Preview --> Action{操作}
+    Action -->|复制| Copy[复制提示词]
+    Action -->|收藏| Fav[添加到收藏]
+    Action -->|修改| Feedback[输入反馈]
+    Feedback --> AI
+```
+
+### 核心交互特性
+
+- **🎯 智能引导**: 通过多维度选项表单,逐步明确需求
+- **📁 拖拽上传**: 拖拽文件到页面任意位置,全屏显示上传区
+- **⭐ 一键收藏**: 点击收藏按钮切换收藏状态,黄色表示已收藏
+- **🔍 快捷搜索**: `Ctrl+K` 打开 Spotlight 搜索,快速查找对话和收藏
+- **🎨 流畅动画**: 标签页切换、收藏状态、文件上传都有流畅的动画效果
+
+> 📖 **详细流程图**: 查看 [用户交互流程文档](docs/user-interaction-flow.md) 了解完整的交互流程和时序图
+
+---
 
 ## ✨ 核心特性
 

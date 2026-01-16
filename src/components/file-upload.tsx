@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Image, FileText, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,49 @@ export function FileUpload({
 }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [showFullDropZone, setShowFullDropZone] = useState(false)
+  const dragCounterRef = useRef(0)
+
+  // 全局拖拽监听
+  useEffect(() => {
+    const handleGlobalDragEnter = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current++
+      if (dragCounterRef.current === 1) {
+        setShowFullDropZone(true)
+      }
+    }
+
+    const handleGlobalDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current--
+      if (dragCounterRef.current === 0) {
+        setShowFullDropZone(false)
+      }
+    }
+
+    const handleGlobalDragOver = (e: DragEvent) => {
+      e.preventDefault()
+    }
+
+    const handleGlobalDrop = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounterRef.current = 0
+      setShowFullDropZone(false)
+    }
+
+    window.addEventListener('dragenter', handleGlobalDragEnter)
+    window.addEventListener('dragleave', handleGlobalDragLeave)
+    window.addEventListener('dragover', handleGlobalDragOver)
+    window.addEventListener('drop', handleGlobalDrop)
+
+    return () => {
+      window.removeEventListener('dragenter', handleGlobalDragEnter)
+      window.removeEventListener('dragleave', handleGlobalDragLeave)
+      window.removeEventListener('dragover', handleGlobalDragOver)
+      window.removeEventListener('drop', handleGlobalDrop)
+    }
+  }, [])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -78,6 +121,8 @@ export function FileUpload({
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
+    setShowFullDropZone(false)
+    dragCounterRef.current = 0
 
     const file = e.dataTransfer.files?.[0]
     if (file) {
@@ -86,7 +131,37 @@ export function FileUpload({
   }
 
   return (
-    <div className="relative">
+    <>
+      {/* 全屏拖拽上传区域 */}
+      {showFullDropZone && (
+        <div
+          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="max-w-2xl w-full mx-4">
+            <div className={`border-4 border-dashed rounded-2xl p-12 text-center transition-all ${
+              isDragging ? 'border-primary bg-primary/10 scale-105' : 'border-primary/50 bg-primary/5'
+            }`}>
+              <Upload className="w-16 h-16 mx-auto mb-4 text-primary animate-bounce" />
+              <h3 className="text-2xl font-bold mb-2">释放以上传文件</h3>
+              <p className="text-muted-foreground mb-4">
+                支持图片、PDF、DOCX（最大 10MB）
+              </p>
+              {!modelSupportsVision && (
+                <div className="flex items-center justify-center gap-2 text-amber-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">当前模型不支持图片识别</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 常规上传区域 */}
+      <div className="relative">
       {currentFile ? (
         <div className="flex items-center gap-2 p-2 bg-muted rounded-lg border">
           {currentPreview ? (
@@ -113,29 +188,16 @@ export function FileUpload({
           </Button>
         </div>
       ) : (
-        <div
-          className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-            isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10"
           onClick={() => fileInputRef.current?.click()}
+          title="上传文件"
         >
-          <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground mb-1">
-            点击或拖拽上传文件
-          </p>
-          <p className="text-xs text-muted-foreground">
-            支持图片、PDF、DOCX（最大 10MB）
-          </p>
-          {!modelSupportsVision && (
-            <div className="flex items-center justify-center gap-1 mt-2 text-xs text-amber-600">
-              <AlertCircle className="w-3 h-3" />
-              <span>当前模型不支持图片识别</span>
-            </div>
-          )}
-        </div>
+          <Upload className="w-4 h-4" />
+        </Button>
       )}
       <input
         ref={fileInputRef}
@@ -145,5 +207,6 @@ export function FileUpload({
         onChange={handleFileChange}
       />
     </div>
+    </>
   )
 }

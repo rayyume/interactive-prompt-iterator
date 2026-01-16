@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Copy, Check, RefreshCw, Sparkles, Send, Maximize2, X, Star } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
     const [accepted, setAccepted] = useState(false)
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [favorited, setFavorited] = useState(false)
+    const [favoriteId, setFavoriteId] = useState<number | null>(null)
 
     // Parse args safely
     let proposal: PromptProposal | null = null
@@ -43,6 +44,25 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
     } catch (e) {
         // Partial JSON during streaming
     }
+
+    // 检查是否已收藏
+    useEffect(() => {
+        const checkFavorite = async () => {
+            if (!proposal?.finalPrompt && !proposal?.final_prompt) return
+
+            const finalPrompt = proposal.finalPrompt || proposal.final_prompt || ''
+            const existing = await db.favoritePrompts
+                .where('content')
+                .equals(finalPrompt)
+                .first()
+
+            if (existing) {
+                setFavorited(true)
+                setFavoriteId(existing.id!)
+            }
+        }
+        checkFavorite()
+    }, [proposal?.finalPrompt, proposal?.final_prompt])
 
     if (!proposal || !proposal.title) {
         return (
@@ -78,16 +98,24 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
         const finalPrompt = proposal?.finalPrompt || proposal?.final_prompt || ''
         const title = proposal?.title || '未命名提示词'
 
-        await db.favoritePrompts.add({
-            title,
-            content: finalPrompt,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        })
-
-        setFavorited(true)
-        toast.success('已添加到收藏')
-        setTimeout(() => setFavorited(false), 2000)
+        if (favorited && favoriteId) {
+            // 取消收藏
+            await db.favoritePrompts.delete(favoriteId)
+            setFavorited(false)
+            setFavoriteId(null)
+            toast.success('已取消收藏')
+        } else {
+            // 添加收藏
+            const id = await db.favoritePrompts.add({
+                title,
+                content: finalPrompt,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            })
+            setFavorited(true)
+            setFavoriteId(id as number)
+            toast.success('已添加到收藏')
+        }
     }
 
     if (accepted || 'result' in toolInvocation) {
@@ -152,12 +180,12 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                                 <div className="absolute top-2 right-2 flex gap-2">
                                     <Button
                                         size="icon"
-                                        variant="secondary"
-                                        className="h-8 w-8 opacity-80 hover:opacity-100 transition-all"
+                                        variant={favorited ? "default" : "secondary"}
+                                        className={`h-8 w-8 transition-all ${favorited ? 'bg-yellow-500 hover:bg-yellow-600' : 'opacity-80 hover:opacity-100'}`}
                                         onClick={handleFavorite}
-                                        title="收藏提示词"
+                                        title={favorited ? "取消收藏" : "收藏提示词"}
                                     >
-                                        <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-yellow-500 text-yellow-500 scale-110 rotate-12' : ''}`} />
+                                        <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-white text-white' : ''}`} />
                                     </Button>
                                     <Button
                                         size="icon"
@@ -185,12 +213,12 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                         <div className="absolute top-4 right-4 z-10">
                             <Button
                                 size="icon"
-                                variant="secondary"
-                                className="h-8 w-8 opacity-80 hover:opacity-100 transition-all"
+                                variant={favorited ? "default" : "secondary"}
+                                className={`h-8 w-8 transition-all ${favorited ? 'bg-yellow-500 hover:bg-yellow-600' : 'opacity-80 hover:opacity-100'}`}
                                 onClick={handleFavorite}
-                                title="收藏提示词"
+                                title={favorited ? "取消收藏" : "收藏提示词"}
                             >
-                                <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-yellow-500 text-yellow-500 scale-110' : ''}`} />
+                                <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-white text-white' : ''}`} />
                             </Button>
                         </div>
 
