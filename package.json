@@ -8,6 +8,8 @@
     "build": "npm run copy-pdf-worker && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
     "record-demo": "node scripts/record-demo.js"
   },
   "dependencies": {

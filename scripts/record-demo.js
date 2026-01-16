@@ -34,8 +34,8 @@ async function recordInteractiveFlow(page) {
   console.log('📹 开始录制：交互式提示词生成流程');
 
   // 等待页面加载
-  await page.waitForLoadState('networkidle');
-  await wait(1000);
+  await page.waitForLoadState('domcontentloaded');
+  await wait(2000);
 
   // 截图：初始页面
   await page.screenshot({
@@ -148,10 +148,16 @@ async function main() {
 
   const page = await context.newPage();
 
+  // 增加默认超时时间
+  page.setDefaultTimeout(60000);
+
   try {
     // 访问应用
     console.log(`🌐 访问: ${CONFIG.baseUrl}`);
-    await page.goto(CONFIG.baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(CONFIG.baseUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
 
     // 录制各个场景
     await recordInteractiveFlow(page);
