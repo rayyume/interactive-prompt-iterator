@@ -208,18 +208,32 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                             <div className="mb-3 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Label className="text-sm font-semibold text-foreground/80">{dim.title}</Label>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-xs ${!isMultiple ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                                            单选
-                                        </span>
-                                        <Switch
-                                            checked={isMultiple}
+                                    {/* 扁平化切换按钮 */}
+                                    <div className="inline-flex items-center rounded-md bg-muted p-1 text-xs">
+                                        <button
+                                            type="button"
                                             disabled={submitted}
-                                            onCheckedChange={() => toggleMultiSelect(dim.key)}
-                                        />
-                                        <span className={`text-xs ${isMultiple ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                            onClick={() => !isMultiple && toggleMultiSelect(dim.key)}
+                                            className={`px-3 py-1 rounded transition-all ${
+                                                !isMultiple
+                                                    ? 'bg-background text-foreground shadow-sm font-medium'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            } ${submitted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                                        >
+                                            单选
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={submitted}
+                                            onClick={() => isMultiple && toggleMultiSelect(dim.key)}
+                                            className={`px-3 py-1 rounded transition-all ${
+                                                isMultiple
+                                                    ? 'bg-background text-foreground shadow-sm font-medium'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            } ${submitted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                                        >
                                             多选
-                                        </span>
+                                        </button>
                                     </div>
                                 </div>
                                 {selections[dim.key] && (

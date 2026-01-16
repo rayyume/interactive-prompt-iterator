@@ -1,21 +1,56 @@
 <div align="center">
-  <img src="icon.png" alt="Prompt Iterator Logo" style="max-width: 100%;"  />
+  <img src="icon.png" alt="Prompt Iterator Logo" width="120" height="120" />
 
   # 🚀 交互式提示词迭代器
 
   ### Interactive Prompt Iterator
 
-  一个基于 **Next.js 14**、**Shadcn UI** 和 **Vercel AI SDK** 构建的现代化提示词优化 Web 应用。
+  <p align="center">
+    <strong>通过多轮交互式对话，将模糊想法转化为结构化、高质量的 AI 提示词</strong>
+  </p>
 
-  通过多轮交互式对话，帮助用户将模糊的想法转化为结构化、高质量的 AI 提示词。
+  <p align="center">
+    <a href="https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator/stargazers">
+      <img src="https://img.shields.io/github/stars/systemoutprintlnhelloworld/interactive-prompt-iterator?style=for-the-badge&logo=github&color=yellow" alt="GitHub Stars" />
+    </a>
+    <a href="https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator/network/members">
+      <img src="https://img.shields.io/github/forks/systemoutprintlnhelloworld/interactive-prompt-iterator?style=for-the-badge&logo=github&color=blue" alt="GitHub Forks" />
+    </a>
+    <a href="https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator/blob/master/LICENSE">
+      <img src="https://img.shields.io/github/license/systemoutprintlnhelloworld/interactive-prompt-iterator?style=for-the-badge&color=green" alt="License" />
+    </a>
+    <a href="https://interactive-prompt-iterator.vercel.app">
+      <img src="https://img.shields.io/badge/Demo-Live-brightgreen?style=for-the-badge&logo=vercel" alt="Live Demo" />
+    </a>
+  </p>
 
-  [简体中文](README.md) | [English](README_EN.md)
+  <p align="center">
+    <a href="https://nextjs.org/">
+      <img src="https://img.shields.io/badge/Next.js-14.2-black?style=flat-square&logo=next.js" alt="Next.js" />
+    </a>
+    <a href="https://www.typescriptlang.org/">
+      <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript" alt="TypeScript" />
+    </a>
+    <a href="https://tailwindcss.com/">
+      <img src="https://img.shields.io/badge/Tailwind-3.4-38bdf8?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
+    </a>
+  </p>
 
-  ### 🚀 快速开始
+  <p align="center">
+    <a href="README.md">简体中文</a> •
+    <a href="README_EN.md">English</a> •
+    <a href="#-功能演示">功能演示</a> •
+    <a href="#-本地开发">快速开始</a> •
+    <a href="TODO.md">开发计划</a>
+  </p>
 
-  [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator)
+  <h3>🚀 一键部署</h3>
 
-  点击上方按钮一键部署，或查看[本地开发指南](#-本地开发)
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/systemoutprintlnhelloworld/interactive-prompt-iterator">
+    <img src="https://vercel.com/button" alt="Deploy with Vercel" />
+  </a>
+
+  <p><em>点击上方按钮一键部署到 Vercel，或查看<a href="#-本地开发">本地开发指南</a></em></p>
 
 </div>
 
