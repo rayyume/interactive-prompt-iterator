@@ -86,7 +86,7 @@
 #### 🎨 创意设计场景
 > 演示：UI设计需求、品牌故事、创意策划等设计场景的提示词迭代
 
-![多场景应用](docs/screenshots/demo-multi-scenarios.webp)
+![多场景应用](docs/screenshots/demo-multi-scenarios.gif)
 
 ### 4. 自定义模板管理
 > **场景**: 保存和复用常用提示词模板
