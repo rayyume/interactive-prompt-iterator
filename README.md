@@ -63,14 +63,19 @@
 >
 > 演示：用户输入"帮我写一篇关于AI的文章" → AI提供多维度选项（角色、风格、深度、格式）→ 用户选择偏好 → 生成结构化提示词
 
-![交互式生成流程](docs/screenshots/demo-interactive-flow.gif)
+![交互式生成流程 - 单轮](docs/screenshots/demo-interactive-flow.gif)
+
+#### 多轮交互优化
+> 演示：通过多轮对话逐步细化需求，最终生成高质量提示词
+
+![交互式生成流程 - 多轮](docs/screenshots/demo-interactive-flow-2turn.gif)
 
 ### 2. 文件上传与解析
 > **场景**: 基于文档内容生成提示词
 >
 > 演示：上传PDF论文/DOCX报告/图片截图 → 自动解析内容 → AI结合文件内容提供优化建议 → 生成针对性提示词
 
-![文件上传演示](docs/screenshots/demo-file-upload.webp)
+![文件上传演示](docs/screenshots/demo-file-upload.gif)
 
 ### 3. 多场景应用示例
 
@@ -104,7 +109,7 @@
 >
 > 演示：创建自定义提示词模板 → 保存到本地 → 切换使用不同模板 → 快速应用到新对话
 
-![模板管理演示](docs/screenshots/demo-template-management.webp)
+![模板管理演示](docs/screenshots/demo-template-management.gif)
 
 ## ✨ 核心特性
 
