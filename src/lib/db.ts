@@ -27,9 +27,19 @@ export interface ChatMessage {
     };
 }
 
+export interface FavoritePrompt {
+    id?: number;
+    title: string;
+    content: string;
+    tags?: string[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export class PromptIteratorDB extends Dexie {
     chatSessions!: Table<ChatSession>;
     messages!: Table<ChatMessage>;
+    favoritePrompts!: Table<FavoritePrompt>;
 
     constructor() {
         super('PromptIteratorDB');
@@ -37,7 +47,15 @@ export class PromptIteratorDB extends Dexie {
             chatSessions: '++id, title, updatedAt, createdAt',
             messages: '++id, sessionId, role, createdAt'
         });
+        this.version(2).stores({
+            chatSessions: '++id, title, updatedAt, createdAt',
+            messages: '++id, sessionId, role, createdAt',
+            favoritePrompts: '++id, title, updatedAt, createdAt'
+        });
     }
 }
 
 export const db = new PromptIteratorDB();
+
+// 显式重新导出类型，确保 TypeScript 编译器能正确识别
+export type { ChatSession, ChatMessage, FavoritePrompt };
