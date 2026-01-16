@@ -66,13 +66,14 @@ export function AutoResizeTextarea({
           placeholder={placeholder}
           disabled={disabled}
           autoFocus={autoFocus}
-          className={`resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 min-h-[50px] leading-relaxed ${className}`}
+          className={`resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 leading-relaxed ${className}`}
           rows={1}
           style={{
             lineHeight: '1.6',
             wordBreak: 'break-word',
             overflowWrap: 'anywhere',
-            whiteSpace: 'pre-wrap'
+            whiteSpace: 'pre-wrap',
+            minHeight: '50px'
           }}
         />
 
