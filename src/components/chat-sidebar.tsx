@@ -170,11 +170,11 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
             {/* 搜索框 */}
             {!isCollapsed && (
                 <div className="px-4 mb-3">
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <div className="relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                         <Input
                             placeholder="搜索对话..."
-                            className="pl-8 pr-8 h-9 text-sm"
+                            className="pl-9 pr-9 h-10 text-sm rounded-lg border-muted-foreground/20 bg-muted/30 hover:bg-muted/50 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -182,7 +182,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute right-0 top-0 h-9 w-9 hover:bg-transparent"
+                                className="absolute right-0.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-md hover:bg-muted transition-all duration-200 animate-in fade-in zoom-in"
                                 onClick={() => setSearchQuery('')}
                             >
                                 <X className="h-3.5 w-3.5" />
@@ -190,9 +190,14 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                         )}
                     </div>
                     {searchQuery && (
-                        <p className="text-xs text-muted-foreground mt-1.5 px-1">
-                            找到 {filteredSessions.length} 条结果
-                        </p>
+                        <div className="mt-2 px-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
+                                    {filteredSessions.length}
+                                </span>
+                                <span>条结果</span>
+                            </p>
+                        </div>
                     )}
                 </div>
             )}

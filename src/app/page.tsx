@@ -626,20 +626,20 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-[180px] h-8 text-xs font-medium">
+              <SelectTrigger className="min-w-[180px] w-auto max-w-[280px] h-8 text-xs font-medium">
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-w-[320px]">
                 {availableModels.length > 0 ? (
                   availableModels.map(m => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                    <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
                   ))
                 ) : (
                   <>
-                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                    <SelectItem value="deepseek-chat">DeepSeek Chat</SelectItem>
-                    <SelectItem value="deepseek-coder">DeepSeek Coder</SelectItem>
+                    <SelectItem value="gpt-4-turbo" className="text-xs">GPT-4 Turbo</SelectItem>
+                    <SelectItem value="gpt-3.5-turbo" className="text-xs">GPT-3.5 Turbo</SelectItem>
+                    <SelectItem value="deepseek-chat" className="text-xs">DeepSeek Chat</SelectItem>
+                    <SelectItem value="deepseek-coder" className="text-xs">DeepSeek Coder</SelectItem>
                   </>
                 )}
               </SelectContent>
@@ -752,8 +752,8 @@ export default function Home() {
 
                           {/* 文字生成期间的等待提示 - 当有内容但表单未生成时显示 */}
                           {m.role === 'assistant' && m.id === messages[messages.length - 1]?.id && isLoading && !m.toolInvocations && (
-                            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 animate-pulse">
-                              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-spin" />
+                            <div className="mt-3 flex items-center gap-2.5 text-xs text-muted-foreground bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin drop-shadow-sm" style={{ animationDuration: '2s' }} />
                               <span className="font-medium text-amber-700 dark:text-amber-300">正在准备交互式表单，请稍候...</span>
                             </div>
                           )}
@@ -829,23 +829,23 @@ export default function Home() {
                         <>
                           {/* 等待 AI 回复 */}
                           {!m.content && !m.toolInvocations && (
-                            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                              <div className="flex gap-1">
-                                <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                            <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-300">
+                              <div className="flex gap-1.5">
+                                <div className="w-2.5 h-2.5 bg-primary/70 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0ms', animationDuration: '1s' }}></div>
+                                <div className="w-2.5 h-2.5 bg-primary/70 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '200ms', animationDuration: '1s' }}></div>
+                                <div className="w-2.5 h-2.5 bg-primary/70 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '400ms', animationDuration: '1s' }}></div>
                               </div>
-                              <span>正在思考...</span>
+                              <span className="font-medium">正在思考...</span>
                             </div>
                           )}
 
                           {/* 工具调用加载 - 叠加遮罩（即使有文字内容也显示） */}
                           {m.toolInvocations && m.toolInvocations.length > 0 && !m.toolInvocations[0].args && (
-                            <div className="mt-3 relative">
-                              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse rounded-lg backdrop-blur-[2px] z-10" />
-                              <div className="relative z-20 flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3 border border-dashed border-primary/30">
-                                <Sparkles className="w-4 h-4 animate-spin text-primary" />
-                                <span className="font-medium">正在生成交互式表单...</span>
+                            <div className="mt-3 relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+                              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/15 to-primary/5 animate-pulse rounded-lg backdrop-blur-[2px] z-10" style={{ animationDuration: '2s' }} />
+                              <div className="relative z-20 flex items-center gap-2.5 text-sm text-muted-foreground bg-gradient-to-br from-muted/40 to-muted/20 rounded-lg p-3.5 border border-dashed border-primary/40 shadow-sm">
+                                <Sparkles className="w-4 h-4 animate-spin text-primary drop-shadow-sm" style={{ animationDuration: '2s' }} />
+                                <span className="font-medium bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">正在生成交互式表单...</span>
                               </div>
                             </div>
                           )}

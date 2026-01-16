@@ -7,7 +7,8 @@
     "dev": "npm run copy-pdf-worker && next dev",
     "build": "npm run copy-pdf-worker && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "record-demo": "node scripts/record-demo.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.9",

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Send, Sparkles, Check } from 'lucide-react'
+import { Send, Sparkles, Check, Pencil } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -283,12 +283,25 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                                             variant={selected ? "default" : "outline"}
                                             size="sm"
                                             disabled={submitted}
-                                            className={`h-8 text-xs ${selected ? 'shadow-md scale-105' : 'text-muted-foreground border-muted-foreground/30'}`}
+                                            className={`group/btn relative h-8 text-xs transition-all duration-200 ${
+                                                selected
+                                                    ? 'shadow-md scale-105'
+                                                    : 'text-muted-foreground border-muted-foreground/30 hover:border-primary/50 hover:shadow-sm'
+                                            }`}
                                             onClick={() => handleSelect(dim.key, opt.value, isMultiple)}
                                             onDoubleClick={() => handleDoubleClick(dim.key, opt.value, displayLabel)}
                                             title={`${opt.description || ''}\n\n💡 双击可编辑选项文本`}
                                         >
                                             {displayLabel}
+                                            {/* 双击编辑提示 - 悬停时显示 */}
+                                            {!submitted && (
+                                                <span className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/90 text-primary-foreground text-[10px] font-medium whitespace-nowrap shadow-lg">
+                                                        <Pencil className="w-2.5 h-2.5" />
+                                                        双击编辑
+                                                    </span>
+                                                </span>
+                                            )}
                                         </Button>
                                     )
                                 })}
