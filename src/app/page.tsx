@@ -644,6 +644,7 @@ export default function Home() {
               <Code2 className="w-5 h-5 text-primary" />
             </div>
             <h1 className="text-xl font-bold tracking-tight">Prompt Iterator</h1>
+            <Badge variant="outline" className="text-xs font-normal">v1.57</Badge>
           </div>
           <div className="flex items-center gap-2">
             <Select value={model} onValueChange={setModel}>
@@ -778,11 +779,11 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-3">
                 {messages.map((m: any) => (
                   <div
                     key={m.id}
-                    className={`group flex gap-4 relative mb-8 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`group flex gap-4 relative mb-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {m.role !== 'user' && (
                       <Avatar className="w-8 h-8 mt-1 border shrink-0 bg-secondary/20">
