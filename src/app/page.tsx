@@ -20,6 +20,7 @@ import { QuestionForm } from '@/components/question-form'
 import { PromptProposalCard } from '@/components/prompt-proposal-card'
 import { EnhancementForm } from '@/components/enhancement-form'
 import { FileUpload } from '@/components/file-upload'
+import { AutoResizeTextarea } from '@/components/auto-resize-textarea'
 
 export default function Home() {
   const { apiKey, baseUrl, model, availableModels, setModel } = useAppStore()
@@ -899,12 +900,12 @@ export default function Home() {
               onSubmit={onFormSubmit}
               className="relative flex items-end gap-2 p-2 rounded-xl border bg-muted/40 hover:border-primary/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all"
             >
-              <Input
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 min-h-[50px]"
+              <AutoResizeTextarea
                 value={localInput}
-                onChange={(e) => setLocalInput(e.target.value)}
+                onChange={setLocalInput}
                 onPaste={handlePaste}
                 placeholder="描述你的任务..."
+                disabled={isLoading}
                 autoFocus
               />
               <Button
