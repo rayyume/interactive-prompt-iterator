@@ -802,24 +802,41 @@ export default function Home() {
                           {/* 只显示用户输入的文本，不显示附件内容 */}
                           {(() => {
                             const content = m.content
-                            const attachmentIndex = content.indexOf('[附件内容]')
+                            // 检查新格式的附件标记
+                            const attachmentPattern = /\[附件\d+:/
+                            const imagePattern = /\[图片\d+:/
+                            const hasAttachment = attachmentPattern.test(content) || imagePattern.test(content)
 
-                            if (attachmentIndex > 0) {
-                              // 有附件内容，只显示用户文本
-                              const userText = content.substring(0, attachmentIndex).trim()
+                            // 如果有附件标记,只显示第一个标记之前的文本
+                            if (hasAttachment) {
+                              const firstMarkerIndex = content.search(/\[(附件|图片)\d+:/)
+                              if (firstMarkerIndex > 0) {
+                                const userText = content.substring(0, firstMarkerIndex).trim()
+                                return (
+                                  <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                                    {userText}
+                                  </div>
+                                )
+                              }
+                            }
+
+                            // 兼容旧格式
+                            const oldAttachmentIndex = content.indexOf('[附件内容]')
+                            if (oldAttachmentIndex > 0) {
+                              const userText = content.substring(0, oldAttachmentIndex).trim()
                               return (
                                 <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
                                   {userText}
                                 </div>
                               )
-                            } else {
-                              // 没有附件内容，正常显示
-                              return (
-                                <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
-                                  {content}
-                                </div>
-                              )
                             }
+
+                            // 没有附件内容，正常显示
+                            return (
+                              <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
+                                {content}
+                              </div>
+                            )
                           })()}
 
                           {/* 文字生成期间的等待提示 */}
