@@ -24,6 +24,7 @@ import { AutoResizeTextarea } from '@/components/auto-resize-textarea'
 import { FileAttachmentIcon } from '@/components/file-attachment-icon'
 import { FavoritesPage } from '@/components/favorites-page'
 import { SpotlightSearch } from '@/components/spotlight-search'
+import { ImagePreview } from '@/components/image-preview'
 
 export default function Home() {
   const { apiKey, baseUrl, model, availableModels, setModel } = useAppStore()
@@ -855,7 +856,11 @@ export default function Home() {
                           {m.files.map((file: any, index: number) => (
                             <div key={index}>
                               {file.preview && file.type.startsWith('image/') ? (
-                                <img src={file.preview} alt={file.name} className="max-w-[200px] rounded-lg border" />
+                                <ImagePreview
+                                  src={file.preview}
+                                  alt={file.name}
+                                  className="max-w-[200px] rounded-lg border"
+                                />
                               ) : (
                                 <FileAttachmentIcon
                                   fileName={file.name}
@@ -1012,7 +1017,11 @@ export default function Home() {
                 {uploadedFiles.map((item, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-background rounded-lg border shadow-sm">
                     {item.preview ? (
-                      <img src={item.preview} alt="Preview" className="w-12 h-12 object-cover rounded" />
+                      <ImagePreview
+                        src={item.preview}
+                        alt={item.file.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
                     ) : (
                       <div className="w-12 h-12 bg-muted-foreground/10 rounded flex items-center justify-center">
                         <FileText className="w-6 h-6 text-muted-foreground" />
