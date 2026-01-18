@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { db } from '@/lib/db'
 import type { ChatSession, FavoritePrompt } from '@/lib/db'
 import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { zhCN, enUS } from 'date-fns/locale'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface SpotlightSearchProps {
   open: boolean
@@ -19,6 +20,9 @@ interface SpotlightSearchProps {
 }
 
 export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigateToFavorites }: SpotlightSearchProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const dateLocale = locale === 'zh-CN' ? zhCN : enUS;
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'chats' | 'favorites'>('chats')
   const [chatResults, setChatResults] = useState<ChatSession[]>([])
@@ -118,7 +122,7 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
         <VisuallyHidden>
-          <DialogTitle>搜索对话和收藏</DialogTitle>
+          <DialogTitle>{t('spotlight.searchTitle')}</DialogTitle>
         </VisuallyHidden>
 
         {/* 搜索框 */}
@@ -127,7 +131,7 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               ref={inputRef}
-              placeholder="搜索对话或收藏... (Tab 切换)"
+              placeholder={t('spotlight.searchPlaceholder')}
               className="pl-10 pr-4 h-12 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -147,7 +151,7 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
             }`}
           >
             <MessageSquare className="w-4 h-4" />
-            对话 ({chatResults.length})
+            {t('spotlight.chats')} ({chatResults.length})
           </button>
           <button
             onClick={() => { setActiveTab('favorites'); setSelectedIndex(0) }}
@@ -158,7 +162,7 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
             }`}
           >
             <Star className="w-4 h-4" />
-            收藏 ({favoriteResults.length})
+            {t('spotlight.favoritesTab')} ({favoriteResults.length})
           </button>
         </div>
 
@@ -167,7 +171,7 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
           {results.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>未找到匹配的{activeTab === 'chats' ? '对话' : '收藏'}</p>
+              <p>{activeTab === 'chats' ? t('spotlight.noMatchingChats') : t('spotlight.noMatchingFavorites')}</p>
             </div>
           ) : (
             <div className="p-2">
@@ -195,7 +199,7 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground shrink-0">
-                      {formatDistanceToNow(item.updatedAt, { addSuffix: true, locale: zhCN })}
+                      {formatDistanceToNow(item.updatedAt, { addSuffix: true, locale: dateLocale })}
                     </div>
                   </div>
                 </button>
@@ -207,11 +211,11 @@ export function SpotlightSearch({ open, onOpenChange, onSessionSelect, onNavigat
         {/* 快捷键提示 */}
         <div className="p-3 border-t bg-muted/30 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex gap-4">
-            <span><Badge variant="outline" className="mr-1">↑↓</Badge>导航</span>
-            <span><Badge variant="outline" className="mr-1">Enter</Badge>选择</span>
-            <span><Badge variant="outline" className="mr-1">Tab</Badge>切换</span>
+            <span><Badge variant="outline" className="mr-1">↑↓</Badge>{t('spotlight.navigate')}</span>
+            <span><Badge variant="outline" className="mr-1">Enter</Badge>{t('spotlight.select')}</span>
+            <span><Badge variant="outline" className="mr-1">Tab</Badge>{t('spotlight.switchTab')}</span>
           </div>
-          <span><Badge variant="outline" className="mr-1">Esc</Badge>关闭</span>
+          <span><Badge variant="outline" className="mr-1">Esc</Badge>{t('spotlight.closeDialog')}</span>
         </div>
       </DialogContent>
     </Dialog>

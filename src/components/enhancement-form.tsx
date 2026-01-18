@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { useTranslations } from 'next-intl'
 
 interface EnhancementOption {
     label: string
@@ -31,6 +32,7 @@ interface EnhancementFormProps {
 }
 
 export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: EnhancementFormProps) {
+    const t = useTranslations();
     const { toolCallId, args } = toolInvocation
     const [selections, setSelections] = useState<Record<string, string | string[]>>({}) // 支持单选和多选
     const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
@@ -86,7 +88,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
         return (
             <Card className="flex items-center justify-center p-6 border-dashed animate-pulse">
                 <Sparkles className="w-5 h-5 text-primary animate-spin mr-2" />
-                <span className="text-sm text-muted-foreground">正在分析优化维度...</span>
+                <span className="text-sm text-muted-foreground">{t('enhancementForm.analyzing')}</span>
             </Card>
         )
     }
@@ -189,9 +191,9 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
         })
 
         if (feedbackParts.length === 0) {
-            feedbackParts.push("用户没有选择任何特定修改，请基于当前理解直接生成最终文档。")
+            feedbackParts.push(t('enhancementForm.noSelection'))
         } else {
-            feedbackParts.push("请根据以上选择，生成最终的结构化 Prompt 文档。")
+            feedbackParts.push(t('enhancementForm.submit'))
         }
 
         if (onSubmit) {
@@ -210,7 +212,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
             <Card className="bg-muted/10 border-dashed">
                 <CardContent className="p-4 flex items-center gap-2 text-muted-foreground">
                     <Check className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">✓ 已提交优化方向</span>
+                    <span className="text-sm">✓ {t('enhancementForm.submitted')}</span>
                 </CardContent>
             </Card>
         )
@@ -221,9 +223,9 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
             <CardHeader className="bg-primary/5 pb-3">
                 <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    <CardTitle className="text-base">优化方向建议</CardTitle>
+                    <CardTitle className="text-base">{t('enhancementForm.title')}</CardTitle>
                 </div>
-                <p className="text-xs text-muted-foreground">请选择您希望改进的维度（未选择将保持默认）</p>
+                <p className="text-xs text-muted-foreground">{t('enhancementForm.subtitle')}</p>
             </CardHeader>
 
             <CardContent className="p-0">
@@ -255,7 +257,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                                                     : 'text-muted-foreground hover:text-foreground'
                                             } ${submitted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                         >
-                                            单选
+                                            {t('enhancementForm.singleSelect')}
                                         </button>
                                         <button
                                             type="button"
@@ -267,13 +269,13 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                                                     : 'text-muted-foreground hover:text-foreground'
                                             } ${submitted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                         >
-                                            多选
+                                            {t('enhancementForm.multiSelect')}
                                         </button>
                                     </div>
                                 </div>
                                 {selections[dim.key] && (
                                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
-                                        {Array.isArray(currentSelection) ? `已选 ${currentSelection.length}` : '已选'}
+                                        {Array.isArray(currentSelection) ? t('enhancementForm.selectedCount', { count: currentSelection.length }) : t('enhancementForm.selected')}
                                     </Badge>
                                 )}
                             </div>
@@ -325,7 +327,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                                             }`}
                                             onClick={() => handleSelect(dim.key, opt.value, isMultiple)}
                                             onDoubleClick={() => handleDoubleClick(dim.key, opt.value, displayLabel)}
-                                            title={`${opt.description || ''}\n\n💡 双击可编辑选项文本`}
+                                            title={`${opt.description || ''}\n\n💡 ${t('enhancementForm.doubleClickToEdit')}`}
                                         >
                                             {displayLabel}
                                             {/* 双击编辑提示 - 悬停时显示 */}
@@ -333,7 +335,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
                                                 <span className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-200 pointer-events-none">
                                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/90 text-primary-foreground text-[10px] font-medium whitespace-nowrap shadow-lg">
                                                         <Pencil className="w-2.5 h-2.5" />
-                                                        双击编辑
+                                                        {t('enhancementForm.doubleClickToEdit')}
                                                     </span>
                                                 </span>
                                             )}
@@ -344,7 +346,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
 
                             {dim.allowCustom && (
                                 <Input
-                                    placeholder="其他 (输入自定义要求)..."
+                                    placeholder={t('enhancementForm.customPlaceholder')}
                                     className="h-8 text-xs bg-transparent border-input/50 focus-visible:ring-primary/20"
                                     value={customInputs[dim.key] || ''}
                                     disabled={submitted}
@@ -362,7 +364,7 @@ export function EnhancementForm({ toolInvocation, addToolResult, onSubmit }: Enh
             <CardFooter className="bg-muted/30 p-4 border-t sticky bottom-0 z-10">
                 <Button className="w-full gap-2 shadow-lg" onClick={handleSubmit}>
                     <Send className="w-4 h-4" />
-                    生成最终 Prompt 文档
+                    {t('enhancementForm.submit')}
                 </Button>
             </CardFooter>
         </Card>

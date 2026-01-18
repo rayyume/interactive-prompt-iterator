@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useTranslations } from 'next-intl'
 // RadioGroup is missing, using native inputs
 
 interface Question {
@@ -22,6 +23,7 @@ interface QuestionFormProps {
 }
 
 export function QuestionForm({ toolInvocation, addToolResult }: QuestionFormProps) {
+    const t = useTranslations();
     const { toolCallId, args } = toolInvocation
 
     // Safely parse args to prevent crashes during streaming (partial JSON)
@@ -41,7 +43,7 @@ export function QuestionForm({ toolInvocation, addToolResult }: QuestionFormProp
         return (
             <Card className="p-4 bg-muted/30 animate-pulse">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="text-sm">正在分析需求...</span>
+                    <span className="text-sm">{t('questionForm.analyzing')}</span>
                 </div>
             </Card>
         )
@@ -70,17 +72,10 @@ export function QuestionForm({ toolInvocation, addToolResult }: QuestionFormProp
             <Card className="p-4 bg-muted/30 border-dashed">
                 <div className="flex items-center gap-2 mb-2 text-muted-foreground">
                     <Check className="w-4 h-4" />
-                    <span className="text-sm font-medium">已提交反馈</span>
+                    <span className="text-sm font-medium">{t('questionForm.submitted')}</span>
                 </div>
                 <div className="text-sm space-y-1">
-                    {/* Show a simplified summary if needed, but the original logic returns a string result 
-                 which acts as the 'result' message. However, the UI component stays.
-                 We can just show "Details submitted".
-              */}
-                    {/* Note: The tool result message will be appended to chat history by SDK usually.
-                 So we might just render nothing or a small checkmark here. 
-             */}
-                    <div className="text-xs text-muted-foreground">已完善需求细节</div>
+                    <div className="text-xs text-muted-foreground">{t('questionForm.detailsCompleted')}</div>
                 </div>
             </Card>
         )
@@ -90,8 +85,8 @@ export function QuestionForm({ toolInvocation, addToolResult }: QuestionFormProp
         <Card className="p-5 border-primary/20 shadow-sm animate-in fade-in zoom-in-95 duration-300">
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">请补充细节以生成更好的结果</h3>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">交互模式</span>
+                    <h3 className="font-semibold text-sm">{t('questionForm.title')}</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{t('questionForm.interactiveMode')}</span>
                 </div>
 
                 <div className="space-y-4">
@@ -103,7 +98,7 @@ export function QuestionForm({ toolInvocation, addToolResult }: QuestionFormProp
                                 <Input
                                     value={answers[q.id] || ''}
                                     onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
-                                    placeholder="请输入..."
+                                    placeholder={t('questionForm.inputPlaceholder')}
                                     className="bg-background"
                                 />
                             )}
@@ -157,7 +152,7 @@ export function QuestionForm({ toolInvocation, addToolResult }: QuestionFormProp
                     disabled={Object.keys(answers).length === 0}
                 >
                     <Send className="w-4 h-4" />
-                    提交并生成
+                    {t('questionForm.submitButton')}
                 </Button>
             </div>
         </Card>

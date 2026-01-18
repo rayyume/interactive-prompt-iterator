@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { db } from '@/lib/db'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 interface PromptProposal {
     title: string
@@ -30,6 +31,7 @@ interface PromptProposalCardProps {
 }
 
 export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProposalCardProps) {
+    const t = useTranslations();
     const { toolCallId, args } = toolInvocation
     const [copied, setCopied] = useState(false)
     const [accepted, setAccepted] = useState(false)
@@ -68,7 +70,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
         return (
             <Card className="flex items-center justify-center p-6 border-dashed animate-pulse">
                 <Sparkles className="w-5 h-5 text-primary animate-spin mr-2" />
-                <span className="text-sm text-muted-foreground">正在生成结构化提示词...</span>
+                <span className="text-sm text-muted-foreground">{t('common.loading')}</span>
             </Card>
         )
     }
@@ -96,14 +98,14 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
 
     const handleFavorite = async () => {
         const finalPrompt = proposal?.finalPrompt || proposal?.final_prompt || ''
-        const title = proposal?.title || '未命名提示词'
+        const title = proposal?.title || t('promptProposal.title')
 
         if (favorited && favoriteId) {
             // 取消收藏
             await db.favoritePrompts.delete(favoriteId)
             setFavorited(false)
             setFavoriteId(null)
-            toast.success('已取消收藏')
+            toast.success(t('promptProposal.favoriteRemoved'))
         } else {
             // 添加收藏
             const id = await db.favoritePrompts.add({
@@ -114,7 +116,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
             })
             setFavorited(true)
             setFavoriteId(id as number)
-            toast.success('已添加到收藏')
+            toast.success(t('promptProposal.favoriteAdded'))
         }
     }
 
@@ -135,7 +137,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                 <CardFooter className="py-2 justify-end">
                     <Button variant="ghost" size="sm" onClick={handleCopy}>
                         {copied ? <Check className="w-4 h-4 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
-                        复制全文
+                        {t('promptProposal.copy')}
                     </Button>
                 </CardFooter>
             </Card>
@@ -157,7 +159,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                             variant={favorited ? "default" : "secondary"}
                             className={`h-8 w-8 transition-all ${favorited ? 'bg-yellow-500 hover:bg-yellow-600' : 'opacity-80 hover:opacity-100'}`}
                             onClick={handleFavorite}
-                            title={favorited ? "取消收藏" : "收藏提示词"}
+                            title={favorited ? t('promptProposal.unfavorite') : t('promptProposal.favorite')}
                         >
                             <Star className={`w-4 h-4 transition-all duration-300 ${favorited ? 'fill-white text-white' : ''}`} />
                         </Button>
@@ -170,10 +172,10 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                 <div className="px-6 border-b bg-muted/10">
                     <TabsList className="h-10 bg-transparent p-0">
                         <TabsTrigger value="preview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                            预览视图
+                            Preview
                         </TabsTrigger>
                         <TabsTrigger value="structure" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                            结构详情
+                            Structure
                         </TabsTrigger>
                     </TabsList>
                 </div>
@@ -181,7 +183,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                 <CardContent className="p-0">
                     <TabsContent value="preview" className="m-0">
                         <div className="p-6 bg-card">
-                            <Label className="mb-2 block text-muted-foreground">最终生成的 Prompt</Label>
+                            <Label className="mb-2 block text-muted-foreground">Final Prompt</Label>
                             <div className="relative">
                                 <Textarea
                                     className="min-h-[200px] font-mono text-sm leading-relaxed bg-muted/20 resize-none focus-visible:ring-1"
@@ -242,12 +244,12 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
 
             <CardFooter className="bg-muted/30 p-4 flex justify-between gap-4">
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
-                    若需修改，请直接在对话框输入反馈
+                    For modifications, please provide feedback in the chat
                 </div>
                 <div className="flex gap-2">
                     <Button variant="default" onClick={handleAccept} className="gap-2">
                         <Check className="w-4 h-4" />
-                        采纳此版本
+                        Accept
                     </Button>
                 </div>
             </CardFooter>
@@ -258,7 +260,7 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
             <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-2">
                 <div className="w-full max-w-[95vw] h-[95vh] flex flex-col bg-card border rounded-lg shadow-2xl">
                     <div className="flex items-center justify-between p-4 border-b">
-                        <h3 className="text-lg font-semibold">提示词预览</h3>
+                        <h3 className="text-lg font-semibold">Prompt Preview</h3>
                         <Button
                             size="icon"
                             variant="ghost"
@@ -276,11 +278,11 @@ export function PromptProposalCard({ toolInvocation, addToolResult }: PromptProp
                     </div>
                     <div className="p-4 border-t flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setIsFullscreen(false)}>
-                            关闭
+                            {t('common.close')}
                         </Button>
                         <Button onClick={handleCopy}>
                             {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                            复制全文
+                            {t('promptProposal.copy')}
                         </Button>
                     </div>
                 </div>

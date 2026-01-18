@@ -11,6 +11,7 @@ import type { ChatSession } from '@/lib/db'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { useTranslations } from 'next-intl'
 
 interface ChatSidebarProps {
     currentSessionId: number | null
@@ -19,6 +20,7 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: ChatSidebarProps) {
+    const t = useTranslations();
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [isOpen, setIsOpen] = useState(false)
     const [isCollapsed, setIsCollapsed] = useState(false)
@@ -165,7 +167,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
     const handleDelete = async (e: React.MouseEvent, id: number) => {
         e.stopPropagation()
         e.preventDefault()
-        if (confirm('确定要删除这条记录吗？')) {
+        if (confirm(t('sidebar.deleteConfirm'))) {
             try {
                 await db.messages.where('sessionId').equals(id).delete()
                 await db.chatSessions.delete(id)
@@ -173,10 +175,10 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                 if (currentSessionId === id) {
                     onNewChat()
                 }
-                toast.success('对话已删除')
+                toast.success(t('sidebar.deleteSuccess'))
             } catch (error) {
                 console.error("Failed to delete session:", error)
-                toast.error('删除失败')
+                toast.error(t('sidebar.deleteFailed'))
             }
         }
     }
@@ -194,7 +196,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                         }}
                     >
                         <Plus className="w-4 h-4" />
-                        新对话
+                        {t('sidebar.newConversation')}
                     </Button>
                 )}
                 {showToggle && (
@@ -203,7 +205,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                         size="icon"
                         onClick={toggleCollapse}
                         className="shrink-0"
-                        title={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
+                        title={isCollapsed ? t('sidebar.expandSidebar') : t('sidebar.collapseSidebar')}
                     >
                         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                     </Button>
@@ -217,7 +219,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                         <Input
                             ref={searchInputRef}
-                            placeholder="搜索对话... (Ctrl+K)"
+                            placeholder={t('sidebar.searchPlaceholder')}
                             className="pl-9 pr-9 h-10 text-sm rounded-lg border-muted-foreground/20 bg-muted/30 hover:bg-muted/50 focus-visible:bg-background focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -232,6 +234,13 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                 <X className="h-3.5 w-3.5" />
                             </Button>
                         )}
+                        {!searchQuery && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <kbd className="px-2 py-0.5 text-xs font-medium text-muted-foreground bg-muted border border-muted-foreground/20 rounded">
+                                    {t('sidebar.searchShortcut')}
+                                </kbd>
+                            </div>
+                        )}
                     </div>
                     {searchQuery && (
                         <div className="mt-2 px-1 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -239,7 +248,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
                                     {filteredSessions.length}
                                 </span>
-                                <span>条结果</span>
+                                <span>{t('sidebar.resultsCount')}</span>
                             </p>
                         </div>
                     )}
@@ -277,7 +286,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                 <>
                                     <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
                                         <span className="font-medium text-sm break-words line-clamp-2">
-                                            {session.title || '未命名对话'}
+                                            {session.title || t('sidebar.untitled')}
                                         </span>
                                         <span className="text-xs text-muted-foreground truncate">
                                             {formatDistanceToNow(session.updatedAt, { addSuffix: true, locale: zhCN })}
@@ -299,14 +308,14 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                     {filteredSessions.length === 0 && searchQuery && (
                         <div className="text-center text-sm text-muted-foreground py-8">
                             <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                            <p>未找到匹配的对话</p>
-                            <p className="text-xs mt-1">尝试其他关键词</p>
+                            <p>{t('sidebar.noResults')}</p>
+                            <p className="text-xs mt-1">{t('sidebar.tryOtherKeywords')}</p>
                         </div>
                     )}
 
                     {sessions.length === 0 && !searchQuery && (
                         <div className="text-center text-sm text-muted-foreground py-8">
-                            暂无历史记录
+                            {t('sidebar.noHistory')}
                         </div>
                     )}
                 </div>

@@ -10,9 +10,13 @@ import { db } from '@/lib/db'
 import type { FavoritePrompt } from '@/lib/db'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { zhCN, enUS } from 'date-fns/locale'
+import { useTranslations, useLocale } from 'next-intl'
 
 export function FavoritesPage() {
+  const t = useTranslations();
+  const locale = useLocale();
+  const dateLocale = locale === 'zh-CN' ? zhCN : enUS;
   const [favorites, setFavorites] = useState<FavoritePrompt[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filteredFavorites, setFilteredFavorites] = useState<FavoritePrompt[]>([])
@@ -47,14 +51,14 @@ export function FavoritesPage() {
 
   const handleCopy = async (content: string) => {
     await navigator.clipboard.writeText(content)
-    toast.success('已复制到剪贴板')
+    toast.success(t('favoritesDialog.copied'))
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm('确定要删除这条收藏吗？')) {
+    if (confirm(t('favoritesDialog.confirmDelete'))) {
       await db.favoritePrompts.delete(id)
       await loadFavorites()
-      toast.success('已删除')
+      toast.success(t('favoritesDialog.deleted'))
     }
   }
 
@@ -73,7 +77,7 @@ export function FavoritesPage() {
     })
     setEditingId(null)
     await loadFavorites()
-    toast.success('已保存')
+    toast.success(t('favoritesDialog.saved'))
   }
 
   return (
@@ -82,7 +86,7 @@ export function FavoritesPage() {
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="搜索收藏的提示词..."
+          placeholder={t('favoritesDialog.searchPlaceholder')}
           className="pl-9"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -93,7 +97,7 @@ export function FavoritesPage() {
       {filteredFavorites.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Star className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p>{searchQuery ? '未找到匹配的收藏' : '还没有收藏的提示词'}</p>
+          <p>{searchQuery ? t('favoritesDialog.noMatches') : t('favoritesDialog.noFavorites')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -104,18 +108,18 @@ export function FavoritesPage() {
                   <Input
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    placeholder="标题"
+                    placeholder={t('favoritesDialog.titlePlaceholder')}
                     className="font-medium"
                   />
                   <Textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    placeholder="内容"
+                    placeholder={t('favoritesDialog.contentPlaceholder')}
                     className="min-h-[200px] font-mono text-sm"
                   />
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSave}>保存</Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>取消</Button>
+                    <Button size="sm" onClick={handleSave}>{t('favoritesDialog.saveButton')}</Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>{t('favoritesDialog.cancelButton')}</Button>
                   </div>
                 </div>
               ) : (
@@ -136,7 +140,7 @@ export function FavoritesPage() {
                   </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">{fav.content}</p>
                   <div className="mt-2 text-xs text-muted-foreground">
-                    {formatDistanceToNow(fav.updatedAt, { addSuffix: true, locale: zhCN })}
+                    {formatDistanceToNow(fav.updatedAt, { addSuffix: true, locale: dateLocale })}
                   </div>
                 </>
               )}

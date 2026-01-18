@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAppStore } from '@/lib/store'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useTranslations, useLocale } from 'next-intl'
 
 const TEST_CONFIG = {
     apiKey: 'sk-xMUZVRACBogvAsbFxm2buTDoixjx7APxES7cBh5TELHABCe0',
@@ -26,7 +27,7 @@ const TEST_CONFIG = {
     systemPrompt: '你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。你应该主动提出建议，使用Checkbox等形式让用户选择。'
 }
 
-const DEFAULT_SYSTEM_PROMPT = `你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。
+const DEFAULT_SYSTEM_PROMPT_ZH = `你是交互式提示词优化助手。你的目标是通过多轮对话，引导用户明确需求，并最终生成高质量的结构化提示词。
 
 **核心工作流程**:
 
@@ -59,7 +60,43 @@ const DEFAULT_SYSTEM_PROMPT = `你是交互式提示词优化助手。你的目�
 - 必须使用工具进行交互，不要纯文本输出选项
 - 生成的提示词必须结构化、可复用`
 
+const DEFAULT_SYSTEM_PROMPT_EN = `You are an interactive prompt optimization assistant. Your goal is to guide users through multi-turn conversations to clarify their requirements and ultimately generate high-quality, structured prompts.
+
+**Core Workflow**:
+
+1. **Phase 1: Understanding & Summarization**
+   - When users present initial requirements, **DO NOT generate prompts directly**.
+   - You MUST call the \`suggest_enhancements\` tool to provide 3-5 key optimization dimensions.
+   - Example dimensions:
+     - **Role Definition**: (e.g., Senior Consultant, Creative Director, Rigorous Scholar)
+     - **Thinking Style**: (e.g., Professional & Rigorous, Humorous & Witty, Concise & Clear)
+     - **Thinking Depth**: (e.g., Direct Answer, Chain-of-Thought, Multi-perspective Discussion)
+     - **Output Format**: (e.g., Markdown Document, JSON, Table)
+   - Provide 2-3 specific user-selectable options for each dimension, and allow customization.
+
+2. **Phase 2: Interactive Generation**
+   - After receiving the tool response from \`suggest_enhancements\` (user's selections), generate the final Markdown document.
+   - **Document Format Requirements**:
+     - Title: Prompt Proposal (H1)
+     - Must include ##Role Definition (H2)
+     - Must include ##Core Objective (H2)
+     - Must include ##Workflow (H2)
+     - Must include ##Constraints (H2)
+     - Must include ##Knowledge Boundaries (H2)
+
+3. **Phase 3: Final Confirmation**
+   - Call the \`propose_prompt\` tool to present the generated Markdown prompt to the user.
+   - Users can: copy and use, continue optimizing, or regenerate
+
+**Important Principles**:
+- Do not skip Phase 1 and generate prompts directly
+- Must use tools for interaction, do not output options as plain text
+- Generated prompts must be structured and reusable`
+
 export function SettingsDialog() {
+    const t = useTranslations();
+    const locale = useLocale();
+    const DEFAULT_SYSTEM_PROMPT = locale === 'zh-CN' ? DEFAULT_SYSTEM_PROMPT_ZH : DEFAULT_SYSTEM_PROMPT_EN;
     const { apiKey, baseUrl, model, systemPrompt, availableModels, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels } = useAppStore()
     const [open, setOpen] = useState(false)
     const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt })
@@ -78,7 +115,23 @@ export function SettingsDialog() {
     // Initial sync
     useEffect(() => {
         if (open) {
-            setLocalConfig({ apiKey, baseUrl, model, systemPrompt })
+            // Check if current systemPrompt is one of the default prompts
+            // Check by exact match or by starting text to handle old versions
+            const isDefaultPrompt = systemPrompt === DEFAULT_SYSTEM_PROMPT_ZH ||
+                                   systemPrompt === DEFAULT_SYSTEM_PROMPT_EN ||
+                                   systemPrompt.startsWith('你是交互式提示词优化助手') ||
+                                   systemPrompt.startsWith('You are an interactive prompt optimization assistant')
+
+            // If it's a default prompt, use the current locale's default
+            // Otherwise, keep the custom prompt
+            const promptToUse = isDefaultPrompt ? DEFAULT_SYSTEM_PROMPT : systemPrompt
+
+            setLocalConfig({
+                apiKey,
+                baseUrl,
+                model,
+                systemPrompt: promptToUse
+            })
             setCheckStatus('idle')
             // Load custom templates from localStorage
             const saved = localStorage.getItem('custom-prompt-templates')
@@ -90,7 +143,7 @@ export function SettingsDialog() {
                 }
             }
         }
-    }, [open, apiKey, baseUrl, model, systemPrompt])
+    }, [open, apiKey, baseUrl, model, systemPrompt, DEFAULT_SYSTEM_PROMPT])
 
     const normalizeUrl = (url: string) => {
         let cleanUrl = url.trim()
@@ -127,13 +180,13 @@ export function SettingsDialog() {
                 const models = data.data.map((m: any) => m.id).sort()
                 setAvailableModels(models)
                 setCheckStatus('success')
-                setCheckMessage(`连接成功！获取到 ${models.length} 个模型。`)
+                setCheckMessage(t('settings.connectionSuccess', { count: models.length }))
             } else {
                 throw new Error('响应格式不符合 OpenAI 标准 (missing data array)')
             }
         } catch (error: any) {
             setCheckStatus('error')
-            setCheckMessage(error.message || '连接失败')
+            setCheckMessage(error.message || t('settings.connectionFailed'))
         } finally {
             setIsChecking(false)
         }
@@ -170,6 +223,7 @@ export function SettingsDialog() {
     const handleTemplateChange = (val: string) => {
         setSelectedTemplate(val)
         if (val === 'default') {
+            // Always use the current locale's default prompt
             setLocalConfig(prev => ({ ...prev, systemPrompt: DEFAULT_SYSTEM_PROMPT }))
         } else {
             const template = customTemplates.find(t => t.name === val)
@@ -227,39 +281,39 @@ export function SettingsDialog() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[700px] h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2 shrink-0">
-                    <DialogTitle>系统设置</DialogTitle>
+                    <DialogTitle>{t('settings.title')}</DialogTitle>
                     <DialogDescription>
-                        配置 API 连接与系统提示词逻辑
+                        {t('settings.description')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="config" className="flex-1 flex flex-col min-h-0 w-full">
                     <TabsList className="mx-6 mt-2 grid w-[300px] grid-cols-2">
-                        <TabsTrigger value="config">基础配置</TabsTrigger>
-                        <TabsTrigger value="prompt">提示词管理</TabsTrigger>
+                        <TabsTrigger value="config">{t('settings.basicConfig')}</TabsTrigger>
+                        <TabsTrigger value="prompt">{t('settings.promptManagement')}</TabsTrigger>
                     </TabsList>
 
                     <div className="flex-1 overflow-y-auto p-6 pt-4">
                         <TabsContent value="config" className="space-y-6 mt-0">
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={loadTestConfig} className="flex-1">
-                                    🧪 测试预设（一键配置）
+                                    {t('settings.testPreset')}
                                 </Button>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label>Base URL</Label>
+                                    <Label>{t('settings.baseUrl')}</Label>
                                     <Input
                                         value={localConfig.baseUrl}
                                         onChange={e => setLocalConfig({ ...localConfig, baseUrl: e.target.value })}
                                         className="font-mono text-sm"
                                         placeholder="https://api.openai.com/v1"
                                     />
-                                    <p className="text-xs text-muted-foreground">通常以 /v1 结尾</p>
+                                    <p className="text-xs text-muted-foreground">{t('settings.baseUrlHint')}</p>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>API Key</Label>
+                                    <Label>{t('settings.apiKey')}</Label>
                                     <Input
                                         type="password"
                                         value={localConfig.apiKey}
@@ -275,29 +329,29 @@ export function SettingsDialog() {
                                             checkStatus === 'success' ? <Check className="w-4 h-4 text-green-500" /> :
                                                 checkStatus === 'error' ? <AlertCircle className="w-4 h-4 text-destructive" /> : null}
                                         <span className={checkStatus === 'error' ? 'text-destructive' : 'text-muted-foreground'}>
-                                            {isChecking ? "连接中..." : checkMessage || "点击测试连接以获取模型列表"}
+                                            {isChecking ? t('settings.connecting') : checkMessage || t('settings.clickToTest')}
                                         </span>
                                     </div>
                                     <Button size="sm" variant="outline" onClick={checkConnection} disabled={isChecking}>
-                                        <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isChecking ? 'animate-spin' : ''}`} /> 测试连接
+                                        <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isChecking ? 'animate-spin' : ''}`} /> {t('settings.testConnection')}
                                     </Button>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>选择模型</Label>
+                                    <Label>{t('settings.selectModel')}</Label>
                                     <div className="flex gap-2">
                                         <div className="flex-1 relative">
                                             <Input
                                                 value={localConfig.model}
                                                 onChange={e => setLocalConfig({ ...localConfig, model: e.target.value })}
-                                                placeholder="自定义或选择..."
+                                                placeholder={t('settings.modelPlaceholder')}
                                                 className="font-mono text-sm"
                                             />
                                         </div>
                                         {availableModels.length > 0 && (
                                             <Select onValueChange={(val) => setLocalConfig(prev => ({ ...prev, model: val }))} value={localConfig.model}>
                                                 <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="选择模型" />
+                                                    <SelectValue placeholder={t('settings.selectModel')} />
                                                 </SelectTrigger>
                                                 <SelectContent position="popper" sideOffset={5} className="max-h-[300px] z-50">
                                                     {availableModels.map(m => (
@@ -307,21 +361,21 @@ export function SettingsDialog() {
                                             </Select>
                                         )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">收到模型列表后，您可以直接选择或手动输入</p>
+                                    <p className="text-xs text-muted-foreground">{t('settings.modelHint')}</p>
                                 </div>
                             </div>
                         </TabsContent>
 
                         <TabsContent value="prompt" className="space-y-6 mt-0">
                             <div className="flex items-center justify-between">
-                                <Label>系统提示词模板</Label>
+                                <Label>{t('settings.systemPromptTemplate')}</Label>
                                 <div className="flex gap-2">
                                     <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
                                         <SelectTrigger className="w-[200px]">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent className="z-50">
-                                            <SelectItem value="default">默认模板</SelectItem>
+                                            <SelectItem value="default">{t('settings.defaultTemplate')}</SelectItem>
                                             {customTemplates.map(t => (
                                                 <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>
                                             ))}
@@ -329,7 +383,7 @@ export function SettingsDialog() {
                                     </Select>
                                     {!isAddingTemplate && (
                                         <Button size="sm" variant="outline" onClick={() => setIsAddingTemplate(true)}>
-                                            + 保存为新模板
+                                            {t('settings.saveAsNewTemplate')}
                                         </Button>
                                     )}
                                 </div>
@@ -338,17 +392,17 @@ export function SettingsDialog() {
                             {isAddingTemplate && (
                                 <div className="flex gap-2 p-3 bg-muted/30 rounded-lg border">
                                     <Input
-                                        placeholder="输入模板名称..."
+                                        placeholder={t('settings.templateNamePlaceholder')}
                                         value={newTemplateName}
                                         onChange={e => setNewTemplateName(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && handleAddTemplate()}
                                         className="flex-1"
                                     />
                                     <Button size="sm" onClick={handleAddTemplate} disabled={!newTemplateName.trim()}>
-                                        保存
+                                        {t('favoritesDialog.saveButton')}
                                     </Button>
                                     <Button size="sm" variant="ghost" onClick={() => setIsAddingTemplate(false)}>
-                                        取消
+                                        {t('favoritesDialog.cancelButton')}
                                     </Button>
                                 </div>
                             )}
@@ -360,7 +414,7 @@ export function SettingsDialog() {
                                         variant="destructive"
                                         onClick={() => handleDeleteTemplate(selectedTemplate)}
                                     >
-                                        删除当前模板
+                                        {t('settings.deleteCurrentTemplate')}
                                     </Button>
                                 </div>
                             )}
@@ -372,16 +426,16 @@ export function SettingsDialog() {
                                     setLocalConfig({ ...localConfig, systemPrompt: e.target.value })
                                     setSelectedTemplate('custom')
                                 }}
-                                placeholder="在此输入 System Prompt..."
+                                placeholder={t('settings.promptPlaceholder')}
                             />
                         </TabsContent>
                     </div>
                 </Tabs>
 
                 <DialogFooter className="p-6 pt-2 border-t mt-auto bg-muted/10">
-                    <Button variant="outline" onClick={() => setOpen(false)}>取消</Button>
+                    <Button variant="outline" onClick={() => setOpen(false)}>{t('settings.cancel')}</Button>
                     <Button onClick={handleSave} className="gap-2">
-                        <Save className="w-4 h-4" /> 保存更改
+                        <Save className="w-4 h-4" /> {t('settings.saveChanges')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

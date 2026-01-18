@@ -5,6 +5,7 @@ import { Upload, X, Image, FileText, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 interface FileUploadProps {
   onFileSelect: (file: File, preview?: string) => void
@@ -19,6 +20,7 @@ export function FileUpload({
   currentFiles,
   modelSupportsVision
 }: FileUploadProps) {
+  const t = useTranslations();
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showFullDropZone, setShowFullDropZone] = useState(false)
@@ -87,19 +89,19 @@ export function FileUpload({
 
     // 检查图片支持
     if (isImage && !modelSupportsVision) {
-      toast.error('当前模型不支持图片识别，请更换支持 Vision 的模型')
+      toast.error(t('fileUploadComponent.visionNotSupported'))
       return
     }
 
     // 检查文件类型
     if (!isImage && !isPDF && !isDoc) {
-      toast.error('仅支持图片、PDF 和 DOCX 文件')
+      toast.error(t('fileUploadComponent.unsupportedFormat'))
       return
     }
 
     // 检查文件大小（10MB）
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('文件大小不能超过 10MB')
+      toast.error(t('fileUploadComponent.fileTooLarge'))
       return
     }
 
@@ -154,14 +156,14 @@ export function FileUpload({
               isDragging ? 'border-primary bg-primary/10 scale-105' : 'border-primary/50 bg-primary/5'
             }`}>
               <Upload className="w-16 h-16 mx-auto mb-4 text-primary animate-bounce" />
-              <h3 className="text-2xl font-bold mb-2">释放以上传文件</h3>
+              <h3 className="text-2xl font-bold mb-2">{t('fileUploadComponent.dropToUpload')}</h3>
               <p className="text-muted-foreground mb-4">
-                支持图片、PDF、DOCX（最大 10MB）
+                {t('fileUploadComponent.supportedFormats')}
               </p>
               {!modelSupportsVision && (
                 <div className="flex items-center justify-center gap-2 text-amber-600">
                   <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">当前模型不支持图片识别</span>
+                  <span className="text-sm">{t('fileUploadComponent.modelNotSupported')}</span>
                 </div>
               )}
             </div>
@@ -178,7 +180,7 @@ export function FileUpload({
           size="icon"
           className="h-10 w-10 shrink-0"
           onClick={() => fileInputRef.current?.click()}
-          title="上传文件"
+          title={t('fileUploadComponent.uploadFile')}
         >
           <Upload className="w-4 h-4" />
         </Button>
