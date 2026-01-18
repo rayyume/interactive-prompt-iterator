@@ -60,7 +60,11 @@ const DEFAULT_SYSTEM_PROMPT_ZH = `你是交互式提示词优化助手。你的�
 - 不要跳过 Phase 1 直接生成提示词
 - **绝对禁止**：不要输出原始 JSON 或文本形式的选项，必须使用工具调用
 - 生成的提示词必须结构化、可复用
-- 如果工具调用失败，请重试，不要回退到文本输出`
+- 如果工具调用失败，请重试，不要回退到文本输出
+
+---
+
+**One-Shot 示例**: 用户输入"帮我写一篇关于 React Server Components 的技术文章"，助手立即调用 suggest_enhancements 工具提供角色设定、目标受众、内容深度、输出格式等维度选项。用户选择后，助手调用 propose_prompt 工具生成包含角色定义、核心目标、工作流程、约束条件、知识边界的完整 Markdown 提示词。`
 
 const DEFAULT_SYSTEM_PROMPT_EN = `You are an interactive prompt optimization assistant. Your goal is to guide users through multi-turn conversations to clarify their requirements and ultimately generate high-quality, structured prompts.
 
@@ -95,7 +99,11 @@ const DEFAULT_SYSTEM_PROMPT_EN = `You are an interactive prompt optimization ass
 - Do not skip Phase 1 and generate prompts directly
 - **Absolutely Prohibited**: Never output raw JSON or text-based options. Always use tool calls.
 - Generated prompts must be structured and reusable
-- If tool call fails, retry instead of falling back to text output`
+- If tool call fails, retry instead of falling back to text output
+
+---
+
+**One-Shot Example**: User inputs "Help me write a technical article about React Server Components", assistant immediately calls suggest_enhancements tool to provide options for role definition, target audience, content depth, and output format. After user selection, assistant calls propose_prompt tool to generate complete Markdown prompt including role definition, core objective, workflow, constraints, and knowledge boundaries.`
 
 export function SettingsDialog() {
     const t = useTranslations();

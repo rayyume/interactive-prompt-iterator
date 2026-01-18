@@ -35,6 +35,8 @@
     <a href="https://tailwindcss.com/">
       <img src="https://img.shields.io/badge/Tailwind-3.4-38bdf8?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     </a>
+    <img src="https://img.shields.io/github/last-commit/systemoutprintlnhelloworld/interactive-prompt-iterator?style=flat-square" alt="Last Commit" />
+    <img src="https://img.shields.io/github/issues/systemoutprintlnhelloworld/interactive-prompt-iterator?style=flat-square" alt="Issues" />
   </p>
 
   <p align="center">
@@ -70,6 +72,18 @@
 - [FAQ](#-faq)
 - [Contributing](#-contributing)
 - [Changelog](#-changelog)
+
+---
+
+## 🎯 Why Choose Interactive Prompt Iterator?
+
+| Traditional Approach | This Project |
+|---------------------|--------------|
+| ❌ Need to figure out prompt structure yourself | ✅ AI-guided interaction, auto-generate structured prompts |
+| ❌ Trial and error, low efficiency | ✅ Multi-dimensional options to quickly clarify requirements |
+| ❌ Prompts are hard to reuse | ✅ Template management, one-click application |
+| ❌ Cannot handle complex documents | ✅ Support PDF/image parsing |
+| ❌ Need to memorize complex syntax | ✅ Visual forms, zero learning curve |
 
 ---
 
@@ -497,7 +511,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## 🌟 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=systemoutprintlnhelloworld/interactive-prompt-iterator&type=Date)](https://star-history.com/#systemoutprintlnhelloworld/interactive-prompt-iterator&Date)
+
+---
+
 <div align="center">
-  <p>If this project helps you, please give it a ⭐️</p>
+  <p>⭐ If this project helps you, please give it a star!</p>
   <p>Made with ❤️ by the community</p>
 </div>

@@ -35,6 +35,8 @@
     <a href="https://tailwindcss.com/">
       <img src="https://img.shields.io/badge/Tailwind-3.4-38bdf8?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     </a>
+    <img src="https://img.shields.io/github/last-commit/systemoutprintlnhelloworld/interactive-prompt-iterator?style=flat-square" alt="Last Commit" />
+    <img src="https://img.shields.io/github/issues/systemoutprintlnhelloworld/interactive-prompt-iterator?style=flat-square" alt="Issues" />
   </p>
 
   <p align="center">
@@ -70,6 +72,18 @@
 - [常见问题](#-常见问题)
 - [贡献指南](#-贡献指南)
 - [更新日志](#-更新日志)
+
+---
+
+## 🎯 为什么选择交互式提示词迭代器？
+
+| 传统方式 | 本项目 |
+|---------|--------|
+| ❌ 需要自己摸索提示词结构 | ✅ AI 引导式交互，自动生成结构化提示词 |
+| ❌ 反复试错，效率低下 | ✅ 多维度选项快速明确需求 |
+| ❌ 提示词难以复用 | ✅ 模板管理，一键应用 |
+| ❌ 无法处理复杂文档 | ✅ 支持 PDF/图片解析 |
+| ❌ 需要记忆复杂语法 | ✅ 可视化表单，零学习成本 |
 
 ---
 
