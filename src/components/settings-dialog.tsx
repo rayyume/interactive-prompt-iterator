@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Settings, Check, AlertCircle, RefreshCw, Loader2, Save } from 'lucide-react'
+import { Settings, Check, AlertCircle, RefreshCw, Loader2, Save, Upload, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -12,6 +12,16 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -64,7 +74,25 @@ const DEFAULT_SYSTEM_PROMPT_ZH = `你是交互式提示词优化助手。你的�
 
 ---
 
-**One-Shot 示例**: 用户输入"帮我写一篇关于 React Server Components 的技术文章"，助手立即调用 suggest_enhancements 工具提供角色设定、目标受众、内容深度、输出格式等维度选项。用户选择后，助手调用 propose_prompt 工具生成包含角色定义、核心目标、工作流程、约束条件、知识边界的完整 Markdown 提示词。`
+**One-Shot 示例**:
+
+用户输入："帮我写一篇关于 React Server Components 的技术文章"
+
+助手响应：
+1. 立即调用 suggest_enhancements 工具，展示交互式表格：
+   - 角色设定：资深技术作家 / AI专家 / 科普作者
+   - 语气风格：专业正式 / 轻松易读 / 学术严谨
+   - 内容深度：深度分析 / 适中 / 简明概述
+   - 输出格式：Markdown文档 / 结构化大纲 / 分段式文章
+
+2. 用户选择后（例如：资深技术作家 + 专业正式 + 深度分析 + Markdown文档）
+
+3. 助手调用 propose_prompt 工具生成完整提示词：
+   - 角色定义：你是一位资深技术作家，擅长深入浅出地解释复杂技术概念
+   - 核心目标：撰写一篇关于 React Server Components 的深度技术分析文章
+   - 工作流程：技术背景介绍 → 核心概念解析 → 实际应用场景 → 最佳实践建议
+   - 约束条件：保持专业严谨的语气、提供代码示例、引用官方文档
+   - 知识边界：基于 React 18+ 版本，涵盖服务端渲染的最新实践`
 
 const DEFAULT_SYSTEM_PROMPT_EN = `You are an interactive prompt optimization assistant. Your goal is to guide users through multi-turn conversations to clarify their requirements and ultimately generate high-quality, structured prompts.
 
@@ -103,15 +131,33 @@ const DEFAULT_SYSTEM_PROMPT_EN = `You are an interactive prompt optimization ass
 
 ---
 
-**One-Shot Example**: User inputs "Help me write a technical article about React Server Components", assistant immediately calls suggest_enhancements tool to provide options for role definition, target audience, content depth, and output format. After user selection, assistant calls propose_prompt tool to generate complete Markdown prompt including role definition, core objective, workflow, constraints, and knowledge boundaries.`
+**One-Shot Example**:
+
+User input: "Help me write a technical article about React Server Components"
+
+Assistant response:
+1. Immediately call suggest_enhancements tool to display interactive table:
+   - Role Definition: Senior Tech Writer / AI Expert / Science Communicator
+   - Tone: Professional & Formal / Casual & Readable / Academic & Rigorous
+   - Content Depth: Deep Analysis / Moderate / Brief Overview
+   - Output Format: Markdown Document / Structured Outline / Segmented Article
+
+2. After user selection (e.g., Senior Tech Writer + Professional & Formal + Deep Analysis + Markdown Document)
+
+3. Assistant calls propose_prompt tool to generate complete prompt:
+   - Role Definition: You are a senior technical writer skilled at explaining complex technical concepts clearly
+   - Core Objective: Write an in-depth technical analysis article about React Server Components
+   - Workflow: Technical background introduction → Core concept analysis → Practical use cases → Best practice recommendations
+   - Constraints: Maintain professional and rigorous tone, provide code examples, cite official documentation
+   - Knowledge Boundaries: Based on React 18+ version, covering latest server-side rendering practices`
 
 export function SettingsDialog() {
     const t = useTranslations();
     const locale = useLocale();
     const DEFAULT_SYSTEM_PROMPT = locale === 'zh-CN' ? DEFAULT_SYSTEM_PROMPT_ZH : DEFAULT_SYSTEM_PROMPT_EN;
-    const { apiKey, baseUrl, model, systemPrompt, availableModels, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels } = useAppStore()
+    const { apiKey, baseUrl, model, systemPrompt, availableModels, correctionModel, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels, setCorrectionModel } = useAppStore()
     const [open, setOpen] = useState(false)
-    const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt })
+    const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt, correctionModel })
 
     // Connection Test State
     const [isChecking, setIsChecking] = useState(false)
@@ -123,6 +169,8 @@ export function SettingsDialog() {
     const [selectedTemplate, setSelectedTemplate] = useState<string>('default')
     const [isAddingTemplate, setIsAddingTemplate] = useState(false)
     const [newTemplateName, setNewTemplateName] = useState('')
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [templateToDelete, setTemplateToDelete] = useState<string>('')
 
     // Initial sync
     useEffect(() => {
@@ -266,13 +314,20 @@ export function SettingsDialog() {
     }
 
     const handleDeleteTemplate = (name: string) => {
-        const updated = customTemplates.filter(t => t.name !== name)
+        setTemplateToDelete(name)
+        setDeleteConfirmOpen(true)
+    }
+
+    const confirmDeleteTemplate = () => {
+        const updated = customTemplates.filter(t => t.name !== templateToDelete)
         setCustomTemplates(updated)
         localStorage.setItem('custom-prompt-templates', JSON.stringify(updated))
-        if (selectedTemplate === name) {
+        if (selectedTemplate === templateToDelete) {
             setSelectedTemplate('default')
             setLocalConfig(prev => ({ ...prev, systemPrompt: DEFAULT_SYSTEM_PROMPT }))
         }
+        setDeleteConfirmOpen(false)
+        setTemplateToDelete('')
     }
 
     const handleSave = () => {
@@ -280,13 +335,80 @@ export function SettingsDialog() {
         setBaseUrl(localConfig.baseUrl)
         setModel(localConfig.model)
         setSystemPrompt(localConfig.systemPrompt)
+        setCorrectionModel(localConfig.correctionModel)
         setOpen(false)
     }
 
+    const handleExportSettings = () => {
+        const settings = {
+            apiKey: localConfig.apiKey,
+            baseUrl: localConfig.baseUrl,
+            model: localConfig.model,
+            systemPrompt: localConfig.systemPrompt,
+            correctionModel: localConfig.correctionModel,
+            exportTime: new Date().toISOString()
+        }
+        const jsonString = JSON.stringify(settings)
+        const base64String = btoa(unescape(encodeURIComponent(jsonString)))
+        navigator.clipboard.writeText(base64String).then(() => {
+            alert(t('settings.exportSuccess'))
+        }).catch(() => {
+            // 如果复制失败，显示在弹窗中让用户手动复制
+            prompt(t('settings.exportPrompt'), base64String)
+        })
+    }
+
+    const handleImportSettings = async () => {
+        try {
+            // 尝试从剪贴板读取
+            const clipboardText = await navigator.clipboard.readText()
+            let base64String = clipboardText.trim()
+
+            // 如果剪贴板为空或无效，回退到手动输入
+            if (!base64String) {
+                base64String = prompt(t('settings.importPrompt'))
+                if (!base64String) return
+                base64String = base64String.trim()
+            }
+
+            // 解析配置
+            const jsonString = decodeURIComponent(escape(atob(base64String)))
+            const settings = JSON.parse(jsonString)
+            setLocalConfig({
+                apiKey: settings.apiKey || '',
+                baseUrl: settings.baseUrl || '',
+                model: settings.model || '',
+                systemPrompt: settings.systemPrompt || '',
+                correctionModel: settings.correctionModel || 'grok-beta-fast'
+            })
+            alert(t('settings.importSuccess'))
+        } catch (error) {
+            // 如果剪贴板读取失败或解析失败，回退到手动输入
+            const base64String = prompt(t('settings.importError') + '\n' + t('settings.importPrompt'))
+            if (!base64String) return
+
+            try {
+                const jsonString = decodeURIComponent(escape(atob(base64String.trim())))
+                const settings = JSON.parse(jsonString)
+                setLocalConfig({
+                    apiKey: settings.apiKey || '',
+                    baseUrl: settings.baseUrl || '',
+                    model: settings.model || '',
+                    systemPrompt: settings.systemPrompt || '',
+                    correctionModel: settings.correctionModel || 'grok-beta-fast'
+                })
+                alert(t('settings.importSuccess'))
+            } catch (error) {
+                alert(t('settings.importError'))
+            }
+        }
+    }
+
     return (
+        <>
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" data-settings-trigger>
                     <Settings className="h-[1.2rem] w-[1.2rem]" />
                     <span className="sr-only">Settings</span>
                 </Button>
@@ -333,6 +455,33 @@ export function SettingsDialog() {
                                         className="font-mono text-sm"
                                         placeholder="sk-..."
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>{t('settings.correctionModel')}</Label>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 relative">
+                                            <Input
+                                                value={localConfig.correctionModel}
+                                                onChange={e => setLocalConfig({ ...localConfig, correctionModel: e.target.value })}
+                                                placeholder="grok-beta-fast"
+                                                className="font-mono text-sm"
+                                            />
+                                        </div>
+                                        {availableModels.length > 0 && (
+                                            <Select onValueChange={(val) => setLocalConfig(prev => ({ ...prev, correctionModel: val }))} value={localConfig.correctionModel}>
+                                                <SelectTrigger className="w-[180px]">
+                                                    <SelectValue placeholder={t('settings.selectModel')} />
+                                                </SelectTrigger>
+                                                <SelectContent position="popper" sideOffset={5} className="max-h-[300px] z-50">
+                                                    {availableModels.map(m => (
+                                                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{t('settings.correctionModelHint')}</p>
                                 </div>
 
                                 <div className="flex items-center justify-between bg-muted/40 p-3 rounded-md border">
@@ -445,6 +594,14 @@ export function SettingsDialog() {
                 </Tabs>
 
                 <DialogFooter className="p-6 pt-2 border-t mt-auto bg-muted/10">
+                    <div className="flex items-center gap-2 mr-auto">
+                        <Button variant="outline" size="sm" onClick={handleImportSettings}>
+                            <Upload className="w-4 h-4 mr-2" /> {t('settings.importSettings')}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleExportSettings}>
+                            <Download className="w-4 h-4 mr-2" /> {t('settings.exportSettings')}
+                        </Button>
+                    </div>
                     <Button variant="outline" onClick={() => setOpen(false)}>{t('settings.cancel')}</Button>
                     <Button onClick={handleSave} className="gap-2">
                         <Save className="w-4 h-4" /> {t('settings.saveChanges')}
@@ -452,5 +609,25 @@ export function SettingsDialog() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{t('settings.deleteTemplateTitle')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {t('settings.deleteTemplateDescription', { name: templateToDelete })}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setDeleteConfirmOpen(false)}>
+                        {t('favoritesDialog.cancelButton')}
+                    </AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmDeleteTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        {t('settings.confirmDelete')}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
     )
 }

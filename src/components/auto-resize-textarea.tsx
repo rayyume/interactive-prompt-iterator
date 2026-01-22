@@ -103,46 +103,52 @@ export function AutoResizeTextarea({
           }}
         />
 
-        {showExpandButton && (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={() => setIsExpanded(true)}
-            className="absolute right-2 top-2 h-8 w-8 rounded-md bg-background/80 backdrop-blur-sm hover:bg-muted shadow-sm transition-all animate-in fade-in zoom-in z-10"
-            title="展开输入框 (查看完整内容)"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </Button>
-        )}
+        {/* 使用 visibility 而不是条件渲染，避免 hydration 错误 */}
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          onClick={() => setIsExpanded(true)}
+          className="absolute right-2 top-2 h-8 w-8 rounded-md bg-background/80 backdrop-blur-sm hover:bg-muted shadow-sm transition-all z-10"
+          title="展开输入框 (查看完整内容)"
+          style={{
+            visibility: isMounted && showExpandButton ? 'visible' : 'hidden',
+            opacity: isMounted && showExpandButton ? 1 : 0,
+            pointerEvents: isMounted && showExpandButton ? 'auto' : 'none'
+          }}
+        >
+          <Maximize2 className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* 放大对话框 */}
-      <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-        <DialogContent className="max-w-5xl w-[90vw] h-[90vh] flex flex-col p-0 border-4">
-          <DialogHeader className="px-6 py-4 border-b">
-            <DialogTitle className="text-lg font-semibold">Pasted content</DialogTitle>
-            <div className="text-xs text-muted-foreground mt-1">
-              {value.length} 字符 • {value.split('\n').length} 行
+      {isMounted && (
+        <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+          <DialogContent className="max-w-5xl w-[90vw] h-[90vh] flex flex-col p-0 border-4">
+            <DialogHeader className="px-6 py-4 border-b">
+              <DialogTitle className="text-lg font-semibold">Pasted content</DialogTitle>
+              <div className="text-xs text-muted-foreground mt-1">
+                {value.length} 字符 • {value.split('\n').length} 行
+              </div>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden px-6 py-4">
+              <Textarea
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="w-full h-full resize-none leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                autoFocus
+                style={{
+                  lineHeight: '1.6',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'anywhere',
+                  whiteSpace: 'pre-wrap'
+                }}
+              />
             </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden px-6 py-4">
-            <Textarea
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              placeholder={placeholder}
-              className="w-full h-full resize-none leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              autoFocus
-              style={{
-                lineHeight: '1.6',
-                wordBreak: 'break-word',
-                overflowWrap: 'anywhere',
-                whiteSpace: 'pre-wrap'
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

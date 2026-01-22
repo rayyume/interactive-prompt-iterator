@@ -1,6 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
+import { validateToolCall, correctFormat } from '@/lib/format-validator';
 
 export const maxDuration = 30;
 
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
         return new Response('Invalid JSON in request body', { status: 400 });
     }
 
-    const { messages, model: modelId } = body;
+    const { messages, model: modelId, systemPrompt } = body;
 
     if (!messages || !Array.isArray(messages)) {
         return new Response('Missing or invalid messages array', { status: 400 });
@@ -60,10 +61,8 @@ export async function POST(req: Request) {
     });
 
     try {
-        const result = streamText({
-            model: openai.chat(modelId || 'gpt-4-turbo'),
-            messages,
-            system: `# 你是谁
+        // 使用用户设置的 System Prompt，如果没有则使用默认的
+        const defaultSystemPrompt = `# 你是谁
 
 你是**通用提示词优化助手**，一个专业的 Prompt Engineering 专家。
 
@@ -130,97 +129,131 @@ export async function POST(req: Request) {
 
 # 工具调用示例（One-Shot Examples）
 
-## 示例 1：写作任务
+## ⚠️ 绝对禁止规则
 
-**用户**："帮我写一篇关于人工智能的文章"
+**在调用工具前，绝对不允许输出任何文字内容！**
 
-**你的响应**：[直接调用工具，不输出文字]
+❌ 禁止的行为：
+- "我理解了您的需求..."
+- "让我为您分析..."
+- "## 📝 写作风格"
+- 任何形式的文字分析、说明、标题
 
+✅ 正确的行为：
+- 收到用户输入后，**立即调用 suggest_enhancements 工具**
+- **零文字输出**，直接进入工具调用
+
+---
+
+## 示例 1：写作任务（完整流程）
+
+### 第 1 轮对话
+
+**用户输入**：
+"帮我写一篇关于人工智能的文章"
+
+**Assistant 行为**：
+[不输出任何文字，立即调用 suggest_enhancements 工具]
+
+**工具调用**：
 \`\`\`json
 {
-  "dimensions": [
-    {
-      "key": "role",
-      "title": "角色设定",
-      "options": [
-        { "label": "资深科技作家", "value": "tech_writer", "description": "专业的科技写作技巧" },
-        { "label": "AI 研究专家", "value": "ai_expert", "description": "深厚的 AI 专业知识" },
-        { "label": "科普作者", "value": "science_writer", "description": "通俗易懂的表达" }
-      ],
-      "allowCustom": true
-    },
-    {
-      "key": "tone",
-      "title": "语气风格",
-      "options": [
-        { "label": "专业正式", "value": "formal" },
-        { "label": "轻松易读", "value": "casual" },
-        { "label": "学术严谨", "value": "academic" }
-      ],
-      "allowCustom": true
-    },
-    {
-      "key": "detail_level",
-      "title": "详细程度",
-      "options": [
-        { "label": "深度分析", "value": "detailed" },
-        { "label": "适中", "value": "moderate" },
-        { "label": "简明概述", "value": "brief" }
-      ],
-      "allowCustom": true
-    }
-  ]
+  "toolName": "suggest_enhancements",
+  "args": {
+    "dimensions": [
+      {
+        "key": "role",
+        "title": "角色设定",
+        "options": [
+          { "label": "资深科技作家", "value": "tech_writer", "description": "专业的科技写作技巧" },
+          { "label": "AI 研究专家", "value": "ai_expert", "description": "深厚的 AI 专业知识" },
+          { "label": "科普作者", "value": "science_writer", "description": "通俗易懂的表达" }
+        ],
+        "allowCustom": true
+      },
+      {
+        "key": "tone",
+        "title": "语气风格",
+        "options": [
+          { "label": "专业正式", "value": "formal" },
+          { "label": "轻松易读", "value": "casual" },
+          { "label": "学术严谨", "value": "academic" }
+        ],
+        "allowCustom": true
+      },
+      {
+        "key": "detail_level",
+        "title": "详细程度",
+        "options": [
+          { "label": "深度分析", "value": "detailed" },
+          { "label": "适中", "value": "moderate" },
+          { "label": "简明概述", "value": "brief" }
+        ],
+        "allowCustom": true
+      }
+    ]
+  }
 }
 \`\`\`
 
-## 示例 2：授权操作任务
+**前端渲染**：
+[交互式表格自动显示，用户可以点击选项或输入自定义要求]
 
-**用户**："我理解您想要进行授权操作，但我目前无法处理用户权限管理相关的任务"
+### 第 2 轮对话
 
-**你的响应**：[直接调用工具，不输出文字]
+**用户选择**：
+"角色设定: AI 研究专家, 语气风格: 学术严谨, 详细程度: 深度分析"
 
+**Assistant 行为**：
+[收到用户选择后，立即调用 propose_prompt 工具生成最终提示词]
+
+**工具调用**：
 \`\`\`json
 {
-  "dimensions": [
-    {
-      "key": "operation_type",
-      "title": "授权操作类型",
-      "options": [
-        { "label": "用户权限管理", "value": "user_permission", "description": "管理用户访问权限" },
-        { "label": "系统配置授权", "value": "system_config", "description": "系统级配置权限" },
-        { "label": "数据访问授权", "value": "data_access", "description": "数据库或文件访问权限" }
-      ],
-      "allowCustom": true
-    },
-    {
-      "key": "handling_method",
-      "title": "处理方式",
-      "options": [
-        { "label": "联系系统管理员", "value": "contact_admin", "description": "通过管理员处理" },
-        { "label": "在管理系统中直接操作", "value": "direct_operation", "description": "使用管理界面" },
-        { "label": "查看相关文档", "value": "check_docs", "description": "参考权限管理文档" }
-      ],
-      "allowCustom": true
-    },
-    {
-      "key": "documentation",
-      "title": "文档要求",
-      "options": [
-        { "label": "详细操作步骤", "value": "detailed_steps", "description": "包含每一步的详细说明" },
-        { "label": "快速指南", "value": "quick_guide", "description": "简明扼要的操作指南" },
-        { "label": "安全注意事项", "value": "security_notes", "description": "重点说明安全相关内容" }
-      ],
-      "allowCustom": true
-    }
-  ]
+  "toolName": "propose_prompt",
+  "args": {
+    "title": "AI 发展趋势深度分析文章提示词",
+    "role": "你是一位在人工智能领域拥有 10 年以上研究经验的资深专家，专注于 AI 技术演进、产业应用和未来趋势分析。",
+    "objective": "撰写一篇关于人工智能发展趋势的深度分析文章，要求学术严谨、论据充分、逻辑清晰。",
+    "context": "当前 AI 技术正处于快速发展阶段，大语言模型、多模态 AI、具身智能等领域取得突破性进展。",
+    "constraints": [
+      "必须引用权威研究论文和数据支撑观点",
+      "使用学术化的语言风格，避免口语化表达",
+      "深度分析技术原理、应用场景和潜在影响",
+      "客观评估技术局限性和伦理风险",
+      "字数要求：3000-5000 字"
+    ],
+    "workflow": [
+      "分析当前 AI 技术的核心突破点",
+      "梳理各领域的应用案例和数据",
+      "预测未来 3-5 年的发展趋势",
+      "评估技术挑战和社会影响",
+      "总结并提出建设性建议"
+    ],
+    "outputFormat": "Markdown 格式，包含标题、摘要、正文（多级标题）、参考文献",
+    "finalPrompt": "你是一位在人工智能领域拥有 10 年以上研究经验的资深专家。请撰写一篇关于人工智能发展趋势的深度分析文章。\n\n要求：\n1. 引用权威研究论文和数据支撑观点\n2. 使用学术化的语言风格\n3. 深度分析技术原理、应用场景和潜在影响\n4. 客观评估技术局限性和伦理风险\n5. 字数：3000-5000 字\n\n文章结构：\n1. 摘要\n2. 当前 AI 技术核心突破点分析\n3. 各领域应用案例和数据梳理\n4. 未来 3-5 年发展趋势预测\n5. 技术挑战和社会影响评估\n6. 总结与建议\n7. 参考文献\n\n请以 Markdown 格式输出。"
+  }
 }
 \`\`\`
 
-**关键点**：
-- 不要只是说"我会调用工具"，而是**立即调用工具**
-- 工具调用会自动渲染为交互式表格
-- 用户选择后，你会收到工具反馈，然后调用 propose_prompt 生成最终提示词
-- **对于任何类型的任务（包括操作、配置、授权等），都必须调用工具展示选项**`,
+**前端渲染**：
+[显示结构化的提示词方案卡片，用户可以复制使用]
+
+---
+
+## 🚨 强制执行机制
+
+如果你在调用工具前输出了任何文字，系统将：
+1. 自动丢弃你的文字内容
+2. 只保留工具调用部分
+3. 在前端仅显示交互式表格
+
+**记住**：你的价值在于生成结构化的交互式表格，而不是文字说明。`;
+
+        const result = streamText({
+            model: openai.chat(modelId || 'gpt-4-turbo'),
+            messages,
+            system: systemPrompt || defaultSystemPrompt,
             tools: {
                 ask_questions: tool({
                     description: '当用户需求不明确时，调用此工具向用户提问。',
@@ -284,11 +317,53 @@ export async function POST(req: Request) {
                             }
                         } else if (part.type === 'tool-call') {
                             // 工具调用：使用 "9:" 前缀
-                            // 注意：参数在 input 字段，不是 args
+                            console.log('🔧 收到工具调用:', part.toolName);
+                            console.log('🔧 工具参数:', JSON.stringify(part.input, null, 2));
+                            let finalArgs = part.input;
+
+                            // 格式校验
+                            const validation = validateToolCall(part.toolName, part.input);
+                            console.log('✅ 格式校验结果:', validation.valid ? '通过' : '失败', validation.error || '');
+
+                            if (!validation.valid) {
+                                console.log('格式校验失败:', validation.error);
+
+                                // 发送矫正状态
+                                controller.enqueue(encoder.encode(`e:{"type":"correction","status":"correcting"}\n`));
+
+                                // 尝试矫正，最多 3 次
+                                let corrected = false;
+                                for (let i = 0; i < 3; i++) {
+                                    const correction = await correctFormat(
+                                        part.toolName,
+                                        finalArgs,
+                                        apiKey,
+                                        baseUrl
+                                    );
+
+                                    if (correction.success) {
+                                        // 再次校验矫正后的结果
+                                        const revalidation = validateToolCall(part.toolName, correction.correctedArgs);
+                                        if (revalidation.valid) {
+                                            finalArgs = correction.correctedArgs;
+                                            corrected = true;
+                                            console.log(`格式矫正成功（第 ${i + 1} 次尝试）`);
+                                            controller.enqueue(encoder.encode(`e:{"type":"correction","status":"success"}\n`));
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (!corrected) {
+                                    console.log('格式矫正失败，使用原始参数');
+                                    controller.enqueue(encoder.encode(`e:{"type":"correction","status":"failed"}\n`));
+                                }
+                            }
+
                             const toolData = {
                                 toolCallId: part.toolCallId,
                                 toolName: part.toolName,
-                                args: part.input  // 使用 input 而不是 args
+                                args: finalArgs
                             };
                             const chunk = `9:${JSON.stringify(toolData)}\n`;
                             controller.enqueue(encoder.encode(chunk));

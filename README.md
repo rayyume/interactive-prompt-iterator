@@ -67,6 +67,7 @@
 - [Core Features](#-core-features)
 - [Tech Stack](#️-tech-stack)
 - [Quick Start](#-local-development)
+- [Keyboard Shortcuts](#️-keyboard-shortcuts)
 - [Project Structure](#-project-structure)
 - [Development Guide](#-development-guide)
 - [FAQ](#-faq)
@@ -281,6 +282,9 @@ Design Requirements:
   - Support multiple AI models (OpenAI, Claude, domestic large models)
   - Custom API Base URL
   - Adjustable system prompts
+  - Settings import/export for easy configuration migration
+- **🌍 Internationalization**: Full support for English and Simplified Chinese interface switching
+- **⌨️ Keyboard Shortcuts**: Comprehensive keyboard shortcuts for efficient operation (press `Shift+/` to view all shortcuts)
 ## 🛠️ Tech Stack
 
 - **Framework**: Next.js 14.2.16 (App Router)
@@ -318,11 +322,14 @@ Open your browser and visit [http://localhost:3000](http://localhost:3000)
    - **API Key**: Your OpenAI/Claude/other compatible API key
    - **Base URL**: API endpoint address (default: `https://api.openai.com/v1`)
    - **Model**: Select the model to use
+   - **Correction Model**: Model for automatic format correction (default: `grok-beta-fast`)
    - **System Prompt**: Custom system prompt (optional)
 
 3. Click save to start using
 
 > 💡 **Tip**: All configurations are stored locally in the browser and are not uploaded to the server
+>
+> 💡 **Import/Export**: Use the import/export buttons to backup or migrate your settings across devices
 
 ### 🔄 Update Guide
 
@@ -457,6 +464,26 @@ npm run lint
 - **Tool Calls**: Support AI proactively calling tools to generate interactive forms
 - **State Persistence**: Zustand + localStorage for configuration persistence
 - **Database**: Dexie.js wraps IndexedDB, supports complex queries
+---
+
+## ⌨️ Keyboard Shortcuts
+
+Boost your productivity with these keyboard shortcuts:
+
+| Shortcut | Function | Description |
+|----------|----------|-------------|
+| `Ctrl+K` / `⌘+K` | Open Search | Open Spotlight search to quickly find conversations and favorites |
+| `Ctrl+N` / `⌘+N` | New Chat | Start a new conversation |
+| `Ctrl+/` / `⌘+/` | Focus Input | Jump to the message input box |
+| `Alt+S` | Open Settings | Open the settings dialog |
+| `Ctrl+B` / `⌘+B` | Toggle Sidebar | Show/hide the conversation sidebar |
+| `Tab` | Switch Tab | Switch between Chat and Favorites tabs |
+| `Shift+/` | Show Shortcuts | Display this keyboard shortcuts help panel |
+| `Enter` | Send Message | Send the current message |
+| `Shift+Enter` | New Line | Insert a new line in the message input |
+
+> 💡 **Tip**: Press `Shift+/` anytime to view the complete keyboard shortcuts panel
+
 ---
 
 ## ❓ FAQ

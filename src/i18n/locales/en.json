@@ -139,7 +139,19 @@
     "deleteCurrentTemplate": "Delete Current Template",
     "promptPlaceholder": "Enter System Prompt here...",
     "cancel": "Cancel",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "importSettings": "Import Settings",
+    "exportSettings": "Export Settings",
+    "exportSuccess": "Settings copied to clipboard! Please save this string for import.",
+    "exportPrompt": "Copy the following string to import settings:",
+    "importPrompt": "Please paste the exported settings string:",
+    "importSuccess": "Settings imported successfully!",
+    "importError": "Import failed: Invalid string format, please ensure you pasted the complete export string",
+    "correctionModel": "Format Correction Model",
+    "correctionModelHint": "Model used for automatic format correction (default: grok-beta-fast)",
+    "deleteTemplateTitle": "Delete Template",
+    "deleteTemplateDescription": "Are you sure you want to delete template \"{name}\"? This action cannot be undone.",
+    "confirmDelete": "Confirm Delete"
   },
   "spotlight": {
     "placeholder": "Search conversations or navigate...",
@@ -181,7 +193,9 @@
     "titlePlaceholder": "Title",
     "contentPlaceholder": "Content",
     "saveButton": "Save",
-    "cancelButton": "Cancel"
+    "cancelButton": "Cancel",
+    "import": "Import",
+    "export": "Export"
   },
   "questionForm": {
     "analyzing": "Analyzing requirements...",
@@ -191,5 +205,20 @@
     "submitButton": "Submit and Generate",
     "submitted": "Feedback submitted",
     "detailsCompleted": "Requirement details completed"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "general": "General",
+    "chat": "Chat",
+    "openSearch": "Open Search",
+    "newChat": "New Chat",
+    "focusInput": "Focus Input",
+    "openSettings": "Open Settings",
+    "toggleSidebar": "Toggle Sidebar",
+    "switchTab": "Switch Tab",
+    "showShortcuts": "Show Shortcuts",
+    "sendMessage": "Send Message",
+    "newLine": "New Line",
+    "hint": "Press Shift + / to open this panel anytime"
   }
 }

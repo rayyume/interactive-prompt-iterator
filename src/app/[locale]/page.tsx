@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare, Upload, X } from 'lucide-react'
+import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare, Upload, X, RotateCcw } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { db } from '@/lib/db'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { SettingsDialog } from '@/components/settings-dialog'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -27,11 +28,12 @@ import { SpotlightSearch } from '@/components/spotlight-search'
 import { ImagePreview } from '@/components/image-preview'
 import { VersionBadge } from '@/components/version-badge'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useTranslations } from 'next-intl'
 
 export default function Home() {
   const t = useTranslations();
-  const { apiKey, baseUrl, model, availableModels, setModel } = useAppStore()
+  const { apiKey, baseUrl, model, systemPrompt, availableModels, setModel } = useAppStore()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [sessionId, setSessionId] = useState<number | null>(null)
@@ -48,6 +50,7 @@ export default function Home() {
   const abortControllerRef = useRef<AbortController | null>(null)
   const [activeTab, setActiveTab] = useState<'chat' | 'favorites'>('chat') // 标签页状态
   const [spotlightOpen, setSpotlightOpen] = useState(false) // Spotlight 搜索状态
+  const [shortcutsOpen, setShortcutsOpen] = useState(false) // 快捷键对话框状态
 
   // 文件上传状态 - 支持多文件
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ file: File; preview?: string; text?: string }>>([])
@@ -69,18 +72,102 @@ export default function Home() {
     }
   }, [])
 
-  // Ctrl+K 快捷键监听 - 打开 Spotlight 搜索
+  // 全局快捷键监听
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      // 阻止浏览器默认的 Ctrl+T（新标签页）
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') {
         e.preventDefault()
+        e.stopPropagation()
+        // 可以在这里添加自定义功能，或者只是阻止默认行为
+        return
+      }
+
+      // Ctrl+K - 打开 Spotlight 搜索
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        e.stopPropagation()
         setSpotlightOpen(true)
+        return
+      }
+
+      // Ctrl+N - 新建对话（增强阻止）
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        setSessionId(null)
+        setMessages([])
+        setLocalInput('')
+        setUploadedFiles([])
+        if (activeTab === 'favorites') {
+          setActiveTab('chat')
+        }
+        return false
+      }
+
+      // Ctrl+/ - 聚焦输入框（修复：使用更可靠的选择器）
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault()
+        e.stopPropagation()
+        // 使用更可靠的方式查找输入框
+        setTimeout(() => {
+          const textarea = document.querySelector('textarea') as HTMLTextAreaElement
+          if (textarea && !textarea.disabled) {
+            textarea.focus()
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 0)
+        return
+      }
+
+      // Alt+S - 打开设置（避免与其他软件冲突）
+      if (e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        e.stopPropagation()
+        const settingsButton = document.querySelector('[data-settings-trigger]') as HTMLButtonElement
+        if (settingsButton) {
+          settingsButton.click()
+        }
+        return
+      }
+
+      // Ctrl+B - 切换侧边栏
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        e.stopPropagation()
+        const sidebarToggle = document.querySelector('[data-sidebar-toggle]') as HTMLButtonElement
+        if (sidebarToggle) {
+          sidebarToggle.click()
+        }
+        return
+      }
+
+      // Tab - 切换标签页（对话 ⇄ 收藏）
+      if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+        // 只在没有聚焦输入框时才切换标签页
+        const activeElement = document.activeElement
+        const isInputFocused = activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT'
+
+        if (!isInputFocused) {
+          e.preventDefault()
+          e.stopPropagation()
+          setActiveTab(prev => prev === 'chat' ? 'favorites' : 'chat')
+          return
+        }
+      }
+
+      // Shift+/ - 显示快捷键面板
+      if (e.shiftKey && (e.key === '?' || e.key === '/')) {
+        e.preventDefault()
+        setShortcutsOpen(true)
+        return
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [activeTab])
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -215,7 +302,8 @@ export default function Home() {
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          model: model
+          model: model,
+          systemPrompt: systemPrompt
         }),
         signal: abortController.signal
       })
@@ -493,6 +581,21 @@ export default function Home() {
     }
   }
 
+  const handleRetry = async (messageIndex: number) => {
+    // 找到当前 assistant 消息之前的最后一条 user 消息
+    const userMessages = messages.slice(0, messageIndex).filter((m: any) => m.role === 'user')
+    if (userMessages.length === 0) return
+
+    const lastUserMessage = userMessages[userMessages.length - 1]
+
+    // 删除从该 user 消息之后的所有消息
+    const messagesToKeep = messages.slice(0, messages.indexOf(lastUserMessage) + 1)
+    setMessages(messagesToKeep)
+
+    // 重新发送该消息
+    await append({ content: lastUserMessage.content })
+  }
+
   const append = async (message: any) => {
     // 添加用户消息
     const userMessage = {
@@ -548,7 +651,8 @@ export default function Home() {
         },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          model: model
+          model: model,
+          systemPrompt: systemPrompt
         })
       })
 
@@ -672,6 +776,7 @@ export default function Home() {
             </Select>
             <LanguageSwitcher />
             <SettingsDialog />
+            <ThemeToggle />
             <div className="h-6 w-px bg-border mx-2" />
             <TooltipProvider>
               <Tooltip>
@@ -785,7 +890,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {messages.map((m: any) => (
+                {messages.map((m: any, index) => (
                   <div
                     key={m.id}
                     className={`group flex gap-4 relative mb-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -804,7 +909,8 @@ export default function Home() {
                         }`}
                     >
                       {/* 只在有内容且不是纯工具调用时显示文本 */}
-                      {m.content && !m.content.includes('toolCallId') && !m.content.includes('toolName') && (
+                      {/* 🚨 前端拦截：如果同时有工具调用，则隐藏文字内容 */}
+                      {m.content && !m.content.includes('toolCallId') && !m.content.includes('toolName') && !m.toolInvocations && (
                         <div className="space-y-3">
                           {/* 只显示用户输入的文本，不显示附件内容 */}
                           {(() => {
@@ -995,6 +1101,11 @@ export default function Home() {
                           <Pencil className="w-3 h-3" />
                         </Button>
                       )}
+                      {m.role === 'assistant' && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRetry(index)}>
+                          <RotateCcw className="w-3 h-3" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/50 hover:text-destructive" onClick={() => handleDeleteMessage(m.id, sessionId)}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -1131,6 +1242,12 @@ export default function Home() {
           setActiveTab('chat')
         }}
         onNavigateToFavorites={() => setActiveTab('favorites')}
+      />
+
+      {/* 快捷键对话框 */}
+      <KeyboardShortcutsDialog
+        open={shortcutsOpen}
+        onOpenChange={setShortcutsOpen}
       />
     </div>
   )

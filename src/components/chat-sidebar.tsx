@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useLayoutEffect } from 'react'
 import { Plus, MessageSquare, Trash2, Menu, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -10,8 +10,8 @@ import { db } from '@/lib/db'
 import type { ChatSession } from '@/lib/db'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
-import { useTranslations } from 'next-intl'
+import { zhCN, enUS } from 'date-fns/locale'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface ChatSidebarProps {
     currentSessionId: number | null
@@ -21,6 +21,8 @@ interface ChatSidebarProps {
 
 export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: ChatSidebarProps) {
     const t = useTranslations();
+    const locale = useLocale();
+    const dateLocale = locale === 'zh-CN' ? zhCN : enUS;
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [isOpen, setIsOpen] = useState(false)
     const [isCollapsed, setIsCollapsed] = useState(false)
@@ -30,33 +32,39 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
     const [filteredSessions, setFilteredSessions] = useState<ChatSession[]>([]) // 过滤后的会话
     const scrollPositionRef = useRef<number>(0) // 保存滚动位置
     const searchInputRef = useRef<HTMLInputElement>(null) // 搜索框引用
+    const isLoadingRef = useRef(false) // 防止重复加载
 
-    const loadSessions = async () => {
-        // 保存当前滚动位置
-        const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
-        if (viewport) {
-            scrollPositionRef.current = viewport.scrollTop
+    const loadSessions = async (preserveScroll = true) => {
+        // 防止重复加载
+        if (isLoadingRef.current) return
+        isLoadingRef.current = true
+
+        try {
+            // 保存当前滚动位置
+            const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
+            if (viewport && preserveScroll) {
+                scrollPositionRef.current = viewport.scrollTop
+            }
+
+            const allSessions = await db.chatSessions.orderBy('updatedAt').reverse().toArray()
+            setSessions(allSessions)
+            setFilteredSessions(allSessions)
+
+            // 滚动恢复由 useLayoutEffect 统一处理
+        } finally {
+            isLoadingRef.current = false
         }
-
-        const allSessions = await db.chatSessions.orderBy('updatedAt').reverse().toArray()
-        setSessions(allSessions)
-        setFilteredSessions(allSessions)
     }
 
-    // 恢复滚动位置 - 在 sessions 更新后执行
-    useEffect(() => {
+    // 使用 useLayoutEffect 在 DOM 更新后立即同步恢复滚动位置
+    useLayoutEffect(() => {
         if (scrollPositionRef.current > 0) {
-            // 使用双重 RAF 确保 DOM 完全渲染
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
-                    if (viewport) {
-                        viewport.scrollTop = scrollPositionRef.current
-                    }
-                })
-            })
+            const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
+            if (viewport) {
+                viewport.scrollTop = scrollPositionRef.current
+            }
         }
-    }, [sessions])
+    }, [sessions, filteredSessions])
 
     // 搜索过滤
     useEffect(() => {
@@ -149,20 +157,18 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
 
     useEffect(() => {
         loadSessions()
-        // Simple polling or event listener could be better, but for now load on mount
-        // and we can expose a reload method if needed, or rely on parent updates?
-        // Actually, dexie `useLiveQuery` is best but without it, we might just poll or
-        // rely on parent triggering re-renders if we move state up.
-        // Let's stick to simple effect for now.
     }, [])
 
-    // Listen to custom event for DB updates if we want to be fancy, or just refresh often.
-    // For MVP, valid to refresh when list changes.
+    // 监听当前会话变化时刷新列表（保持滚动位置）
     useEffect(() => {
-        // Hacky execution: refresh every 2 seconds to catch updates from main thread
-        const interval = setInterval(loadSessions, 2000)
-        return () => clearInterval(interval)
-    }, [])
+        if (currentSessionId) {
+            // 延迟刷新，确保点击事件完成
+            const timer = setTimeout(() => {
+                loadSessions(true) // preserveScroll = true
+            }, 100)
+            return () => clearTimeout(timer)
+        }
+    }, [currentSessionId])
 
     const handleDelete = async (e: React.MouseEvent, id: number) => {
         e.stopPropagation()
@@ -205,6 +211,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                         size="icon"
                         onClick={toggleCollapse}
                         className="shrink-0"
+                        data-sidebar-toggle
                         title={isCollapsed ? t('sidebar.expandSidebar') : t('sidebar.collapseSidebar')}
                     >
                         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -265,6 +272,12 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                 : 'hover:bg-muted/50 border-transparent'
                                 } ${isCollapsed ? 'overflow-visible' : ''}`}
                             onClick={() => {
+                                // 在点击前保存滚动位置
+                                const viewport = document.querySelector('[data-radix-scroll-area-viewport]')
+                                if (viewport) {
+                                    scrollPositionRef.current = viewport.scrollTop
+                                }
+
                                 onSessionSelect(session.id!)
                                 setIsOpen(false)
                             }}
@@ -289,7 +302,7 @@ export function ChatSidebar({ currentSessionId, onSessionSelect, onNewChat }: Ch
                                             {session.title || t('sidebar.untitled')}
                                         </span>
                                         <span className="text-xs text-muted-foreground truncate">
-                                            {formatDistanceToNow(session.updatedAt, { addSuffix: true, locale: zhCN })}
+                                            {formatDistanceToNow(session.updatedAt, { addSuffix: true, locale: dateLocale })}
                                         </span>
                                     </div>
                                     <Button

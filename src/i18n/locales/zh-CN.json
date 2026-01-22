@@ -139,7 +139,19 @@
     "deleteCurrentTemplate": "删除当前模板",
     "promptPlaceholder": "在此输入 System Prompt...",
     "cancel": "取消",
-    "saveChanges": "保存更改"
+    "saveChanges": "保存更改",
+    "importSettings": "导入设置",
+    "exportSettings": "导出设置",
+    "exportSuccess": "设置已复制到剪贴板！请保存此字符串用于导入。",
+    "exportPrompt": "复制以下字符串用于导入设置：",
+    "importPrompt": "请粘贴导出的设置字符串：",
+    "importSuccess": "设置导入成功！",
+    "importError": "导入失败：字符串格式错误，请确保粘贴的是完整的导出字符串",
+    "correctionModel": "格式矫正模型",
+    "correctionModelHint": "用于自动矫正格式错误的模型（默认: grok-beta-fast）",
+    "deleteTemplateTitle": "删除模板",
+    "deleteTemplateDescription": "确定要删除模板 \"{name}\" 吗？此操作无法撤销。",
+    "confirmDelete": "确认删除"
   },
   "spotlight": {
     "placeholder": "搜索对话或导航...",
@@ -181,7 +193,9 @@
     "titlePlaceholder": "标题",
     "contentPlaceholder": "内容",
     "saveButton": "保存",
-    "cancelButton": "取消"
+    "cancelButton": "取消",
+    "import": "导入",
+    "export": "导出"
   },
   "questionForm": {
     "analyzing": "正在分析需求...",
@@ -191,5 +205,20 @@
     "submitButton": "提交并生成",
     "submitted": "已提交反馈",
     "detailsCompleted": "已完善需求细节"
+  },
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "general": "通用",
+    "chat": "对话",
+    "openSearch": "打开搜索",
+    "newChat": "新建对话",
+    "focusInput": "聚焦输入框",
+    "openSettings": "打开设置",
+    "toggleSidebar": "切换侧边栏",
+    "switchTab": "切换标签页",
+    "showShortcuts": "显示快捷键",
+    "sendMessage": "发送消息",
+    "newLine": "换行",
+    "hint": "按 Shift + / 随时打开此面板"
   }
 }
