@@ -203,7 +203,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                 baseUrl,
                 model,
                 systemPrompt: promptToUse,
-                correctionModel
+                correctionModel,
+                autoRetry,
+                maxRetries
             })
             setCheckStatus('idle')
             // Load custom templates from localStorage
@@ -414,7 +416,9 @@ export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDia
                     baseUrl: settings.baseUrl || '',
                     model: settings.model || '',
                     systemPrompt: settings.systemPrompt || '',
-                    correctionModel: settings.correctionModel || 'grok-beta-fast'
+                    correctionModel: settings.correctionModel || 'grok-beta-fast',
+                    autoRetry: settings.autoRetry !== undefined ? settings.autoRetry : true,
+                    maxRetries: settings.maxRetries || 3
                 })
                 alert(t('settings.importSuccess'))
             } catch (error) {
