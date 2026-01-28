@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Settings, Check, AlertCircle, RefreshCw, Loader2, Save, Upload, Download } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -152,13 +153,23 @@ Assistant response:
    - Constraints: Maintain professional and rigorous tone, provide code examples, cite official documentation
    - Knowledge Boundaries: Based on React 18+ version, covering latest server-side rendering practices`
 
-export function SettingsDialog() {
+interface SettingsDialogProps {
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+}
+
+export function SettingsDialog({ open: externalOpen, onOpenChange }: SettingsDialogProps = {}) {
     const t = useTranslations();
     const locale = useLocale();
+    const { theme, setTheme } = useTheme() // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
     const DEFAULT_SYSTEM_PROMPT = locale === 'zh-CN' ? DEFAULT_SYSTEM_PROMPT_ZH : DEFAULT_SYSTEM_PROMPT_EN;
-    const { apiKey, baseUrl, model, systemPrompt, availableModels, correctionModel, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels, setCorrectionModel } = useAppStore()
-    const [open, setOpen] = useState(false)
-    const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt, correctionModel })
+    const { apiKey, baseUrl, model, systemPrompt, availableModels, correctionModel, autoRetry, maxRetries, setApiKey, setBaseUrl, setModel, setSystemPrompt, setAvailableModels, setCorrectionModel, setAutoRetry, setMaxRetries } = useAppStore()
+    const [internalOpen, setInternalOpen] = useState(false)
+
+    // 使用外部控制或内部状态（KISS原则 - 简洁至上！）
+    const open = externalOpen !== undefined ? externalOpen : internalOpen
+    const setOpen = onOpenChange || setInternalOpen
+    const [localConfig, setLocalConfig] = useState({ apiKey, baseUrl, model, systemPrompt, correctionModel, autoRetry, maxRetries })
 
     // Connection Test State
     const [isChecking, setIsChecking] = useState(false)
@@ -338,6 +349,8 @@ export function SettingsDialog() {
         setModel(localConfig.model)
         setSystemPrompt(localConfig.systemPrompt)
         setCorrectionModel(localConfig.correctionModel)
+        setAutoRetry(localConfig.autoRetry) // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+        setMaxRetries(localConfig.maxRetries)
         setOpen(false)
     }
 
@@ -348,6 +361,8 @@ export function SettingsDialog() {
             model: localConfig.model,
             systemPrompt: localConfig.systemPrompt,
             correctionModel: localConfig.correctionModel,
+            autoRetry: localConfig.autoRetry, // 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+            maxRetries: localConfig.maxRetries,
             exportTime: new Date().toISOString()
         }
         const jsonString = JSON.stringify(settings)
@@ -381,7 +396,9 @@ export function SettingsDialog() {
                 baseUrl: settings.baseUrl || '',
                 model: settings.model || '',
                 systemPrompt: settings.systemPrompt || '',
-                correctionModel: settings.correctionModel || 'grok-beta-fast'
+                correctionModel: settings.correctionModel || 'grok-beta-fast',
+                autoRetry: settings.autoRetry !== undefined ? settings.autoRetry : true,
+                maxRetries: settings.maxRetries || 3
             })
             alert(t('settings.importSuccess'))
         } catch (error) {
@@ -423,14 +440,15 @@ export function SettingsDialog() {
                     </DialogDescription>
                 </DialogHeader>
 
-                <Tabs defaultValue="config" className="flex-1 flex flex-col min-h-0 w-full">
-                    <TabsList className="mx-6 mt-2 grid w-[300px] grid-cols-2">
-                        <TabsTrigger value="config">{t('settings.basicConfig')}</TabsTrigger>
+                <Tabs defaultValue="connection" className="flex-1 flex flex-col min-h-0 w-full">
+                    <TabsList className="mx-6 mt-2 grid w-[400px] grid-cols-3">
+                        <TabsTrigger value="connection">{t('settings.connectionConfig')}</TabsTrigger>
+                        <TabsTrigger value="advanced">{t('settings.advancedSettings')}</TabsTrigger>
                         <TabsTrigger value="prompt">{t('settings.promptManagement')}</TabsTrigger>
                     </TabsList>
 
                     <div className="flex-1 overflow-y-auto p-6 pt-4">
-                        <TabsContent value="config" className="space-y-6 mt-0">
+                        <TabsContent value="connection" className="space-y-6 mt-0">
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" onClick={loadTestConfig} className="flex-1">
                                     {t('settings.testPreset')}
@@ -457,33 +475,6 @@ export function SettingsDialog() {
                                         className="font-mono text-sm"
                                         placeholder="sk-..."
                                     />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>{t('settings.correctionModel')}</Label>
-                                    <div className="flex gap-2">
-                                        <div className="flex-1 relative">
-                                            <Input
-                                                value={localConfig.correctionModel}
-                                                onChange={e => setLocalConfig({ ...localConfig, correctionModel: e.target.value })}
-                                                placeholder="grok-beta-fast"
-                                                className="font-mono text-sm"
-                                            />
-                                        </div>
-                                        {availableModels.length > 0 && (
-                                            <Select onValueChange={(val) => setLocalConfig(prev => ({ ...prev, correctionModel: val }))} value={localConfig.correctionModel}>
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder={t('settings.selectModel')} />
-                                                </SelectTrigger>
-                                                <SelectContent position="popper" sideOffset={5} className="max-h-[300px] z-50">
-                                                    {availableModels.map(m => (
-                                                        <SelectItem key={m} value={m}>{m}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">{t('settings.correctionModelHint')}</p>
                                 </div>
 
                                 <div className="flex items-center justify-between bg-muted/40 p-3 rounded-md border">
@@ -525,6 +516,87 @@ export function SettingsDialog() {
                                         )}
                                     </div>
                                     <p className="text-xs text-muted-foreground">{t('settings.modelHint')}</p>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        {/* 高级设置标签页 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／ */}
+                        <TabsContent value="advanced" className="space-y-6 mt-0">
+                            <div className="space-y-6">
+                                {/* 格式矫正模型 */}
+                                <div className="space-y-2">
+                                    <Label>{t('settings.correctionModel')}</Label>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 relative">
+                                            <Input
+                                                value={localConfig.correctionModel}
+                                                onChange={e => setLocalConfig({ ...localConfig, correctionModel: e.target.value })}
+                                                placeholder="grok-beta-fast"
+                                                className="font-mono text-sm"
+                                            />
+                                        </div>
+                                        {availableModels.length > 0 && (
+                                            <Select onValueChange={(val) => setLocalConfig(prev => ({ ...prev, correctionModel: val }))} value={localConfig.correctionModel}>
+                                                <SelectTrigger className="w-[180px]">
+                                                    <SelectValue placeholder={t('settings.selectModel')} />
+                                                </SelectTrigger>
+                                                <SelectContent position="popper" sideOffset={5} className="max-h-[300px] z-50">
+                                                    {availableModels.map(m => (
+                                                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{t('settings.correctionModelHint')}</p>
+                                </div>
+
+                                {/* 自动重试配置 */}
+                                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-medium">{t('settings.autoRetry')}</Label>
+                                            <p className="text-xs text-muted-foreground">{t('settings.autoRetryHint')}</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={localConfig.autoRetry}
+                                                onChange={(e) => setLocalConfig({ ...localConfig, autoRetry: e.target.checked })}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    {localConfig.autoRetry && (
+                                        <div className="space-y-2">
+                                            <Label className="text-sm">{t('settings.maxRetries')}</Label>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                max="5"
+                                                value={localConfig.maxRetries}
+                                                onChange={(e) => setLocalConfig({ ...localConfig, maxRetries: parseInt(e.target.value) || 3 })}
+                                                className="w-24"
+                                            />
+                                            <p className="text-xs text-muted-foreground">{t('settings.maxRetriesHint')}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 主题选择器 */}
+                                <div className="space-y-2">
+                                    <Label>{t('settings.theme')}</Label>
+                                    <Select value={theme} onValueChange={setTheme}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="light">{t('settings.themeLight')}</SelectItem>
+                                            <SelectItem value="dark">{t('settings.themeDark')}</SelectItem>
+                                            <SelectItem value="system">{t('settings.themeSystem')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         </TabsContent>

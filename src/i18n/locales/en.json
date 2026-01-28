@@ -118,8 +118,9 @@
   "settings": {
     "title": "System Settings",
     "description": "Configure API connection and system prompt logic",
-    "basicConfig": "Basic Configuration",
-    "promptManagement": "Prompt Management",
+    "connectionConfig": "Connection",
+    "advancedSettings": "Advanced",
+    "promptManagement": "Prompts",
     "testPreset": "🧪 Test Preset (One-click Setup)",
     "baseUrl": "Base URL",
     "baseUrlHint": "Usually ends with /v1",
@@ -149,9 +150,26 @@
     "importError": "Import failed: Invalid string format, please ensure you pasted the complete export string",
     "correctionModel": "Format Correction Model",
     "correctionModelHint": "Model used for automatic format correction (default: grok-beta-fast)",
+    "autoRetry": "Auto Retry",
+    "autoRetryHint": "Automatically retry when API call fails",
+    "maxRetries": "Max Retries",
+    "maxRetriesHint": "Recommended: 1-5 times",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
     "deleteTemplateTitle": "Delete Template",
     "deleteTemplateDescription": "Are you sure you want to delete template \"{name}\"? This action cannot be undone.",
-    "confirmDelete": "Confirm Delete"
+    "confirmDelete": "Confirm Delete",
+    "emptyResponseError": "API returned empty response, please check if your API Key is configured correctly"
+  },
+  "errors": {
+    "authFailed": "Authentication Failed",
+    "quotaExceeded": "Quota Exceeded",
+    "networkError": "Network Error",
+    "serverError": "Server Error",
+    "unknownError": "Unknown Error",
+    "retried": "Retried {count} times"
   },
   "spotlight": {
     "placeholder": "Search conversations or navigate...",
@@ -220,5 +238,11 @@
     "sendMessage": "Send Message",
     "newLine": "New Line",
     "hint": "Press Shift + / to open this panel anytime"
+  },
+  "apiKeyRequired": {
+    "title": "API Key Required",
+    "description": "You haven't configured an API Key yet and cannot use AI features.",
+    "hint": "Please click the button below to go to the settings page and configure your API Key.",
+    "goToSettings": "Go to Settings"
   }
 }

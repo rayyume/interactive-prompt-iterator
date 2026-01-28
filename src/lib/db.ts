@@ -29,6 +29,12 @@ export type ChatMessage = {
         type: string;
         preview?: string;
     }>;
+    // 错误状态 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+    error?: {
+        type: 'network' | 'auth' | 'quota' | 'server' | 'unknown';
+        message: string;
+        retryCount?: number;
+    };
 }
 
 export type FavoritePrompt = {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare, Upload, X, RotateCcw } from 'lucide-react'
+import { Send, Trash2, StopCircle, User, Bot, Copy, Pencil, Code2, Sparkles, Star, FileText, MessageSquare, Upload, X, RotateCcw, AlertCircle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { ChatSidebar } from '@/components/chat-sidebar'
 import { db } from '@/lib/db'
@@ -29,6 +29,7 @@ import { ImagePreview } from '@/components/image-preview'
 import { VersionBadge } from '@/components/version-badge'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
+import { ApiKeyRequiredDialog } from '@/components/api-key-required-dialog'
 import { useTranslations } from 'next-intl'
 
 export default function Home() {
@@ -51,6 +52,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'chat' | 'favorites'>('chat') // 标签页状态
   const [spotlightOpen, setSpotlightOpen] = useState(false) // Spotlight 搜索状态
   const [shortcutsOpen, setShortcutsOpen] = useState(false) // 快捷键对话框状态
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false) // API Key 提示对话框状态
+  const [settingsOpen, setSettingsOpen] = useState(false) // 设置对话框状态
 
   // 文件上传状态 - 支持多文件
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ file: File; preview?: string; text?: string }>>([])
@@ -143,18 +146,24 @@ export default function Home() {
         return
       }
 
-      // Tab - 切换标签页（对话 ⇄ 收藏）
+      // Tab - 切换标签页（对话 ⇄ 收藏）- 由傲娇大小姐哈雷酱优化 (￣▽￣)／
       if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
-        // 只在没有聚焦输入框时才切换标签页
+        // 检查是否在输入框或可编辑元素中
         const activeElement = document.activeElement
-        const isInputFocused = activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT'
+        const isInputFocused = activeElement?.tagName === 'TEXTAREA' ||
+                              activeElement?.tagName === 'INPUT' ||
+                              (activeElement as HTMLElement)?.isContentEditable
 
-        if (!isInputFocused) {
-          e.preventDefault()
-          e.stopPropagation()
-          setActiveTab(prev => prev === 'chat' ? 'favorites' : 'chat')
-          return
+        // 如果在输入框中，允许默认的 Tab 行为（但不切换标签页）
+        if (isInputFocused) {
+          return // 让浏览器处理默认行为
         }
+
+        // 如果不在输入框中，阻止默认行为并切换标签页
+        e.preventDefault()
+        e.stopPropagation()
+        setActiveTab(prev => prev === 'chat' ? 'favorites' : 'chat')
+        return
       }
 
       // Shift+/ - 显示快捷键面板
@@ -200,6 +209,13 @@ export default function Home() {
   const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!localInput.trim()) return
+
+    // 检查 API Key 是否配置（KISS原则 - 简洁至上！）
+    const defaultApiKey = 'sk-Mdj54E4QkE5dQi6jV4TUli6kEN4fsPQKuIjchrBl6hIjvws1'
+    if (!apiKey || apiKey === defaultApiKey) {
+      setApiKeyDialogOpen(true)
+      return
+    }
 
     // 取消之前的请求（如果有）
     if (abortControllerRef.current) {
@@ -356,7 +372,7 @@ export default function Home() {
             console.log('Processing line:', line.substring(0, 100))
 
             try {
-              // Vercel AI SDK 使用格式: "0:text" 或 "9:{json}"
+              // Vercel AI SDK 使用格式: "0:text" 或 "9:{json}" 或 "e:{error}"
               if (line.startsWith('0:')) {
                 // 文本内容
                 const text = JSON.parse(line.slice(2))
@@ -368,13 +384,24 @@ export default function Home() {
                 console.log('Tool call detected:', toolData)
                 aiToolInvocationsRef.current.push(toolData)
                 setIsToolRendering(true) // 标记工具正在渲染
+              } else if (line.startsWith('e:')) {
+                // 錯誤信息 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+                const errorData = JSON.parse(line.slice(2))
+                console.error('Stream error detected:', errorData)
+
+                // 立即中斷流處理並顯示錯誤
+                throw new Error(errorData.message || 'Stream error')
               } else {
-                // 可能是其他格式，直接累积为文本
+                // 可能是其他格式，直接累積为文本
                 console.log('Unknown format, treating as text')
                 aiContentRef.current += line
               }
             } catch (parseError) {
               console.warn('Failed to parse line:', line.substring(0, 50), parseError)
+              // 如果是錯誤對象，重新拋出
+              if (parseError instanceof Error && parseError.message.includes('Stream error')) {
+                throw parseError
+              }
               // 解析失败时，将其作为普通文本处理
               aiContentRef.current += line
             }
@@ -408,8 +435,32 @@ export default function Home() {
       console.log('Final AI content length:', aiContentRef.current.length)
       console.log('Tool invocations count:', aiToolInvocationsRef.current.length)
 
-      // 最终更新数据库中的 AI 消息
-      if (aiContentRef.current.length > 0 || aiToolInvocationsRef.current.length > 0) {
+      // 檢測空響應 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+      if (aiContentRef.current.length === 0 && aiToolInvocationsRef.current.length === 0) {
+        console.warn('Empty response detected - treating as authentication error')
+
+        // 空響應通常意味著 API Key 配置錯誤或權限問題
+        const errorType = 'auth'
+        const errorMessage = t('settings.emptyResponseError')
+
+        await db.messages.update(parseInt(aiMessageId), {
+          content: '',
+          error: {
+            type: errorType,
+            message: errorMessage,
+            retryCount: 0
+          }
+        })
+
+        setMessages(prev => prev.map(m =>
+          m.id === aiMessageId
+            ? { ...m, error: { type: errorType, message: errorMessage, retryCount: 0 } }
+            : m
+        ))
+
+        toast.error(`請求出錯: ${errorMessage}`, { duration: 4000 })
+      } else {
+        // 最终更新数据库中的 AI 消息
         await db.messages.update(parseInt(aiMessageId), {
           content: aiContentRef.current,
           toolInvocations: aiToolInvocationsRef.current.length > 0 ? aiToolInvocationsRef.current : undefined
@@ -425,13 +476,44 @@ export default function Home() {
     } catch (error: any) {
       console.error('Chat error:', error)
 
-      // 如果是用户主动取消或组件卸载导致的中断，不显示错误提示
+      // 识别错误类型 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+      let errorType: 'network' | 'auth' | 'quota' | 'server' | 'unknown' = 'unknown'
+      const errorMessage = error.message || '未知错误'
+
       if (error.name === 'AbortError') {
         console.log('Request was aborted')
         toast.info('请求已取消', { duration: 2000 })
-      } else {
-        toast.error(`请求出错: ${error.message}`, { duration: 4000 })
+        return
       }
+
+      if (errorMessage.includes('Authentication Failed') || errorMessage.includes('401')) {
+        errorType = 'auth'
+      } else if (errorMessage.includes('Connection Failed') || errorMessage.includes('fetch failed')) {
+        errorType = 'network'
+      } else if (errorMessage.includes('429') || errorMessage.includes('quota')) {
+        errorType = 'quota'
+      } else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+        errorType = 'server'
+      }
+
+      // 更新 AI 消息，添加错误信息
+      await db.messages.update(parseInt(aiMessageId), {
+        content: '',
+        error: {
+          type: errorType,
+          message: errorMessage,
+          retryCount: 0
+        }
+      })
+
+      // 更新 UI 中的消息
+      setMessages(prev => prev.map(m =>
+        m.id === aiMessageId
+          ? { ...m, error: { type: errorType, message: errorMessage, retryCount: 0 } }
+          : m
+      ))
+
+      toast.error(`请求出错: ${errorMessage}`, { duration: 4000 })
     } finally {
       console.log('Setting isLoading to false')
       setIsLoading(false)
@@ -775,7 +857,7 @@ export default function Home() {
               </SelectContent>
             </Select>
             <LanguageSwitcher />
-            <SettingsDialog />
+            <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
             <ThemeToggle />
             <div className="h-6 w-px bg-border mx-2" />
             <TooltipProvider>
@@ -903,11 +985,34 @@ export default function Home() {
                     )}
 
                     <div
-                      className={`rounded-2xl px-5 py-3 shadow-sm ${m.role === 'user'
-                        ? 'bg-primary text-primary-foreground rounded-tr-sm max-w-[85%]'
-                        : 'bg-card text-card-foreground border rounded-tl-sm max-w-[90%]'
+                      className={`rounded-2xl px-5 py-3 shadow-sm ${
+                        m.error
+                          ? 'bg-destructive/10 text-destructive border-2 border-destructive rounded-tl-sm max-w-[90%]'
+                          : m.role === 'user'
+                            ? 'bg-primary text-primary-foreground rounded-tr-sm max-w-[85%]'
+                            : 'bg-card text-card-foreground border rounded-tl-sm max-w-[90%]'
                         }`}
                     >
+                      {/* 错误信息显示 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／ */}
+                      {m.error && (
+                        <div className="mb-3 flex items-start gap-2 p-3 bg-destructive/20 rounded-lg border border-destructive/50">
+                          <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                          <div className="flex-1 space-y-2">
+                            <div className="font-semibold text-sm">
+                              {m.error.type === 'auth' && t('errors.authFailed')}
+                              {m.error.type === 'quota' && t('errors.quotaExceeded')}
+                              {m.error.type === 'network' && t('errors.networkError')}
+                              {m.error.type === 'server' && t('errors.serverError')}
+                              {m.error.type === 'unknown' && t('errors.unknownError')}
+                            </div>
+                            <div className="text-xs opacity-90">{m.error.message}</div>
+                            {m.error.retryCount && m.error.retryCount > 0 && (
+                              <div className="text-xs opacity-75">{t('errors.retried', { count: m.error.retryCount })}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* 只在有内容且不是纯工具调用时显示文本 */}
                       {/* 🚨 前端拦截：如果同时有工具调用，则隐藏文字内容 */}
                       {m.content && !m.content.includes('toolCallId') && !m.content.includes('toolName') && !m.toolInvocations && (
@@ -1248,6 +1353,13 @@ export default function Home() {
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
+      />
+
+      {/* API Key 未配置提示对话框 - 由傲娇大小姐哈雷酱制作 (￣▽￣)／ */}
+      <ApiKeyRequiredDialog
+        open={apiKeyDialogOpen}
+        onOpenChange={setApiKeyDialogOpen}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
     </div>
   )

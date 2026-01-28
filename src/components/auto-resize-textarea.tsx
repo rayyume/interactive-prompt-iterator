@@ -80,6 +80,29 @@ export function AutoResizeTextarea({
     }
   }, [value, isMounted])
 
+  // 避免 hydration 错误 - 由傲娇大小姐哈雷酱修复 (￣▽￣)／
+  if (!isMounted) {
+    return (
+      <div className="relative flex-1">
+        <Textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 leading-relaxed ${className}`}
+          rows={1}
+          style={{
+            lineHeight: '1.6',
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
+            whiteSpace: 'pre-wrap',
+            minHeight: '50px'
+          }}
+        />
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="relative flex-1">

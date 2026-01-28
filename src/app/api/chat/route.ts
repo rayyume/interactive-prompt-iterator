@@ -308,9 +308,19 @@ export async function POST(req: Request) {
                     for await (const part of result.fullStream) {
                         console.log('Stream part type:', part.type, part);
 
-                        if (part.type === 'text-delta') {
+                        if (part.type === 'error') {
+                            // 錯誤類型 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+                            console.error('Stream error detected:', part);
+                            const errorData = {
+                                type: 'stream_error',
+                                message: (part as any).error?.message || 'Stream processing error'
+                            };
+                            const errorChunk = `e:${JSON.stringify(errorData)}\n`;
+                            controller.enqueue(encoder.encode(errorChunk));
+                            controller.close();
+                            return;
+                        } else if (part.type === 'text-delta') {
                             // 文本内容：使用 "0:" 前缀
-                            // text-delta 的内容在 text 字段，不是 delta 字段
                             if (part.text !== undefined && part.text !== null) {
                                 const chunk = `0:${JSON.stringify(part.text)}\n`;
                                 controller.enqueue(encoder.encode(chunk));
@@ -380,8 +390,41 @@ export async function POST(req: Request) {
                         }
                     }
                     controller.close();
-                } catch (error) {
-                    controller.error(error);
+                } catch (streamError: any) {
+                    // 流處理過程中的錯誤 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+                    console.error('Stream processing error:', streamError);
+
+                    // 構建詳細的錯誤信息
+                    let errorMessage = streamError.message || 'Unknown streaming error';
+                    let errorType = 'error';
+
+                    // 識別具體錯誤類型
+                    if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                        errorType = 'auth_error';
+                        errorMessage = `Authentication Failed: Invalid API Key. Please check your API Key in Settings.`;
+                    } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+                        errorType = 'model_error';
+                        errorMessage = `Model Not Found: The model '${modelId}' does not exist on this provider. Please select a valid model.`;
+                    } else if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+                        errorType = 'quota_error';
+                        errorMessage = `Rate Limit Exceeded: Too many requests or insufficient quota. Please try again later.`;
+                    } else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+                        errorType = 'server_error';
+                        errorMessage = `Server Error: The API provider is experiencing issues. Please try again later.`;
+                    } else if (errorMessage.includes('timeout')) {
+                        errorType = 'timeout_error';
+                        errorMessage = `Request Timeout: The request took too long to complete. Please try again.`;
+                    }
+
+                    // 發送錯誤信息到前端
+                    const errorData = {
+                        type: errorType,
+                        message: errorMessage,
+                        originalError: streamError.message
+                    };
+                    const errorChunk = `e:${JSON.stringify(errorData)}\n`;
+                    controller.enqueue(encoder.encode(errorChunk));
+                    controller.close();
                 }
             }
         });
@@ -394,19 +437,26 @@ export async function POST(req: Request) {
         });
     } catch (error: any) {
         console.error("Chat API Error:", error);
-        // Return a JSON error that the frontend can parse nicely, 
-        // or just a text response with a clear error prefix that the UI can handle.
-        // Standard Response with 500 status is best, UI useChat onError handles it.
         const errorMessage = error.message || 'Unknown network error';
 
+        // 增強錯誤識別 - 由傲娇大小姐哈雷酱添加 (￣▽￣)／
+        if (errorMessage.includes('model_not_found') || errorMessage.includes('model not found')) {
+            return new Response(`Model Not Found: The model '${modelId}' does not exist on this provider. Please select a valid model.`, { status: 404 });
+        }
         if (errorMessage.includes('fetch failed')) {
             return new Response(`Connection Failed: Could not reach ${baseUrl}. Please check your Base URL settings.`, { status: 504 });
         }
-        if (errorMessage.includes('401')) {
-            return new Response(`Authentication Failed: Invalid API Key for ${baseUrl}.`, { status: 401 });
+        if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('Invalid API key')) {
+            return new Response(`Authentication Failed: Invalid API Key. Please check your API Key in Settings.`, { status: 401 });
         }
         if (errorMessage.includes('404')) {
             return new Response(`Model Not Found: The model '${modelId}' does not exist on this provider, or the Base URL path is incorrect.`, { status: 404 });
+        }
+        if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+            return new Response(`Rate Limit Exceeded: Too many requests or insufficient quota. Please try again later.`, { status: 429 });
+        }
+        if (errorMessage.includes('503') || errorMessage.includes('Service Unavailable')) {
+            return new Response(`Service Unavailable: The API provider is temporarily unavailable. Please try again later.`, { status: 503 });
         }
 
         return new Response(`AI Error: ${errorMessage}`, { status: 500 });

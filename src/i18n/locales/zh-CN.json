@@ -118,7 +118,8 @@
   "settings": {
     "title": "系统设置",
     "description": "配置 API 连接与系统提示词逻辑",
-    "basicConfig": "基础配置",
+    "connectionConfig": "连接配置",
+    "advancedSettings": "高级设置",
     "promptManagement": "提示词管理",
     "testPreset": "🧪 测试预设（一键配置）",
     "baseUrl": "Base URL",
@@ -149,9 +150,26 @@
     "importError": "导入失败：字符串格式错误，请确保粘贴的是完整的导出字符串",
     "correctionModel": "格式矫正模型",
     "correctionModelHint": "用于自动矫正格式错误的模型（默认: grok-beta-fast）",
+    "autoRetry": "自动重试",
+    "autoRetryHint": "API 调用失败时自动重试",
+    "maxRetries": "最大重试次数",
+    "maxRetriesHint": "建议设置为 1-5 次",
+    "theme": "主题",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "跟随系统",
     "deleteTemplateTitle": "删除模板",
     "deleteTemplateDescription": "确定要删除模板 \"{name}\" 吗？此操作无法撤销。",
-    "confirmDelete": "确认删除"
+    "confirmDelete": "确认删除",
+    "emptyResponseError": "API 返回空响应，请检查 API Key 配置是否正确"
+  },
+  "errors": {
+    "authFailed": "认证失败",
+    "quotaExceeded": "额度不足",
+    "networkError": "网络错误",
+    "serverError": "服务器错误",
+    "unknownError": "未知错误",
+    "retried": "已重试 {count} 次"
   },
   "spotlight": {
     "placeholder": "搜索对话或导航...",
@@ -220,5 +238,11 @@
     "sendMessage": "发送消息",
     "newLine": "换行",
     "hint": "按 Shift + / 随时打开此面板"
+  },
+  "apiKeyRequired": {
+    "title": "需要配置 API Key",
+    "description": "您还没有配置 API Key，无法使用 AI 功能。",
+    "hint": "请点击下方按钮前往设置页面配置您的 API Key。",
+    "goToSettings": "前往设置"
   }
 }
